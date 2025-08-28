@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Padel Point – Static Stat Screens</title>
+<style>
+  :root { --team1-color:#04ca95; --team2-color:#bb86fc; }
+  html,body { height:100%; margin:0; background:#121212; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif; color:#fff; }
+  .toolbar {
+    position:fixed; top:12px; left:12px; z-index:1000; display:flex; gap:8px;
+    background:rgba(0,0,0,.4); border:1px solid #333; border-radius:12px; padding:8px;
+    backdrop-filter: blur(6px);
+  }
+  .toolbar button {
+    padding:8px 12px; border-radius:8px; border:1px solid #333; background:#1e1e1e; color:#fff; cursor:pointer;
+  }
+  .toolbar button.active { background:#333; }
+  .screen-wrapper { position:absolute; inset:0; padding:0.5vw; box-sizing:border-box; }
+  .stats-background {
+    position:absolute; inset:0;
+    /* Replace this with your real court background if you like */
+    background-image: radial-gradient(ellipse at center, #1a1a1a 0%, #0e0e0e 70%);
+    background-size:cover; background-position:center; background-repeat:no-repeat;
+    z-index:40;
+  }
+  .stats-background::after { content:''; position:absolute; inset:0; border:0.8vw solid; pointer-events:none; }
+  .team1-border::after { border-color: var(--team1-color); }
+  .team2-border::after { border-color: var(--team2-color); }
+
+  .stats-foreground { position:absolute; inset:0; z-index:50; pointer-events:auto; }
+  .stage { position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; padding:2vw; }
+  .card { text-align:center; max-width:80vw; background:#121212; border-radius:2vw; padding:3vw; box-shadow: 0 0 60px rgba(0,0,0,.35); }
+  .hidden { display:none; }
+
+  .screen-title { font-size:3.5vw; font-weight:600; letter-spacing:.08em; margin:0 0 2.5vw; }
+
+  /* Results */
+  .set-scores-display { display:flex; gap:3vw; justify-content:center; align-items:center; flex-wrap:wrap; }
+  .set-score-container { display:flex; align-items:center; gap:2vw; }
+  .set-score-number { font-size:7vw; font-weight:700; text-shadow:0 0 .5vw rgba(255,255,255,.25); }
+  .set-score-separator { font-size:4vw; font-weight:800; color:#fff; }
+  .tiebreak-score { font-size:3vw; font-weight:700; opacity:.9; }
+
+  /* Totals */
+  .stats-grid { display:flex; flex-direction:column; gap:4vw; width:100%; max-width:80vw; }
+  .top-row { display:flex; justify-content:space-between; gap:4vw; }
+  .stat { flex:1; text-align:center; }
+  .stat-label { font-size:2.1vw; font-weight:600; color:#e5e7eb; margin-bottom:1vw; letter-spacing:.1em; }
+  .stat-value { font-size:8vw; font-weight:800; text-shadow:0 0 .5vw rgba(255,255,255,.25); }
+  .points-won-label { font-size:2.3vw; font-weight:600; color:#e5e7eb; letter-spacing:.1em; margin-bottom:1vw; }
+  .points-chart { display:flex; flex-direction:column; gap:1.5vw; }
+  .bar-row { display:flex; align-items:center; gap:2vw; }
+  .bar { height:3vw; border-radius:.5vw; min-width:2vw; }
+  .bar-val { font-size:4vw; font-weight:800; min-width:8vw; text-align:left; text-shadow:0 0 .3vw rgba(255,255,255,.25); }
+
+  /* Momentum */
+  .stats-title { font-size:3.5vw; font-weight:600; margin-bottom:3vw; color:#ffffff; text-shadow:0 0 1vw rgba(250,204,21,.4); }
+  .momentum-grid {
+    display:grid; grid-template-columns:repeat(14, 1fr); grid-template-rows:repeat(7, 1fr);
+    gap:.8vw; width:70vw; height:35vw; padding:3vw; background:rgba(18,18,18,.8);
+    border-radius:2vw; backdrop-filter:blur(8px); justify-items:center; align-items:center; margin:0 auto;
+  }
+  .dot { width:2.5vw; height:2.5vw; border-radius:50%; aspect-ratio:1; }
+  .dot.t1 { background:var(--team1-color); box-shadow:0 0 .5vw rgba(4,202,149,.3); }
+  .dot.t2 { background:var(--team2-color); box-shadow:0 0 .5vw rgba(187,134,252,.3); }
+  .dot.neutral { background:rgba(255,255,255,.15); border:2px solid rgba(255,255,255,.2); }
+
+  /* Service/Breaks/Streak */
+  .svc-grid { display:flex; flex-direction:column; gap:4vw; width:100%; max-width:80vw; }
+  .svc-title { font-size:3vw; font-weight:600; color:#e5e7eb; letter-spacing:.2em; }
+  .svc-bars { display:flex; flex-direction:column; gap:2vw; }
+  .svc-row { display:flex; align-items:center; gap:2vw; min-height:4vw; }
+  .svc-bar { height:4vw; border-radius:.5vw; min-width:2vw; }
+  .svc-val { font-size:6vw; font-weight:800; min-width:12vw; text-align:left; text-shadow:0 0 .5vw rgba(255,255,255,.25); }
+  .bottom { display:flex; justify-content:space-between; gap:8vw; margin-top:2vw; }
+  .box { flex:1; text-align:center; }
+  .box h4 { font-size:2.5vw; font-weight:600; color:#e5e7eb; margin:0 0 2vw; letter-spacing:.1em; }
+  .breaks { display:flex; align-items:center; justify-content:center; gap:1.5vw; }
+  .break-num { font-size:8vw; font-weight:800; text-shadow:0 0 .5vw rgba(255,255,255,.2); }
+  .break-sep { font-size:6vw; font-weight:800; color:#666; }
+  .streak { display:flex; align-items:baseline; justify-content:center; gap:1vw; }
+  .streak-num { font-size:10vw; font-weight:800; text-shadow:0 0 .5vw rgba(255,255,255,.2); }
+  .streak-label { font-size:3vw; font-weight:700; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button data-target="results" class="active">Results</button>
+  <button data-target="totals">Totals</button>
+  <button data-target="momentum">Momentum</button>
+  <button data-target="service">Service</button>
+</div>
+
+<!-- RESULTS -->
+<div id="results" class="screen-wrapper">
+  <div class="stats-background team1-border"></div>
+  <div class="stats-foreground">
+    <div class="stage">
+      <div class="card">
+        <h1 class="screen-title">TEAM 1 WINS!</h1>
+        <div class="set-scores-display">
+          <div class="set-score-container">
+            <span class="set-score-number" style="color:var(--team1-color)">7</span>
+            <span class="set-score-separator">-</span>
+            <span class="set-score-number">6</span>
+            <span class="tiebreak-score"> (<span style="color:var(--team1-color)">7</span>-<span>5</span>)</span>
+          </div>
+          <div class="set-score-container">
+            <span class="set-score-number">3</span>
+            <span class="set-score-separator">-</span>
+            <span class="set-score-number" style="color:var(--team2-color)">6</span>
+          </div>
+          <div class="set-score-container">
+            <span class="set-score-number" style="color:var(--team1-color)">6</span>
+            <span class="set-score-separator">-</span>
+            <span class="set-score-number">4</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOTALS -->
+<div id="totals" class="screen-wrapper hidden">
+  <div class="stats-background team1-border"></div>
+  <div class="stats-foreground">
+    <div class="stage">
+      <div class="card">
+        <div class="stats-grid">
+          <div class="top-row">
+            <div class="stat">
+              <div class="stat-label">GAME LENGTH</div>
+              <div id="lengthVal" class="stat-value">65m</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">TOTAL POINTS</div>
+              <div class="stat-value">142</div>
+            </div>
+          </div>
+          <div>
+            <div class="points-won-label">POINTS WON</div>
+            <div class="points-chart">
+              <div class="bar-row">
+                <div id="t1Bar" class="bar" style="background:var(--team1-color); width:60%"></div>
+                <div id="t1Val" class="bar-val">72</div>
+              </div>
+              <div class="bar-row">
+                <div id="t2Bar" class="bar" style="background:var(--team2-color); width:40%"></div>
+                <div id="t2Val" class="bar-val">70</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOMENTUM -->
+<div id="momentum" class="screen-wrapper hidden">
+  <div class="stats-background team1-border"></div>
+  <div class="stats-foreground">
+    <div class="stage">
+      <div class="card">
+        <div class="stats-title">MATCH MOMENTUM</div>
+        <div id="momGrid" class="momentum-grid">
+          <!-- 98 dots will be injected -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICE / BREAKS / STREAK -->
+<div id="service" class="screen-wrapper hidden">
+  <div class="stats-background team1-border"></div>
+  <div class="stats-foreground">
+    <div class="stage">
+      <div class="card">
+        <div class="svc-grid">
+          <div>
+            <div class="svc-title">SERVICE POINTS WON</div>
+            <div class="svc-bars">
+              <div class="svc-row">
+                <div id="svc2" class="svc-bar" style="background:var(--team2-color); width:64%"></div>
+                <div class="svc-val" id="svc2Val">32</div>
+              </div>
+              <div class="svc-row">
+                <div id="svc1" class="svc-bar" style="background:var(--team1-color); width:72%"></div>
+                <div class="svc-val" id="svc1Val">36</div>
+              </div>
+            </div>
+          </div>
+          <div class="bottom">
+            <div class="box">
+              <h4>BREAKS</h4>
+              <div class="breaks">
+                <span class="break-num" style="color:var(--team2-color)">3</span>
+                <span class="break-sep">-</span>
+                <span class="break-num" style="color:var(--team1-color)">4</span>
+              </div>
+            </div>
+            <div class="box">
+              <h4>BEST STREAK</h4>
+              <div class="streak">
+                <span class="streak-num" style="color:var(--team1-color)">6</span>
+                <span class="streak-label">PTS</span>
+              </div>
+            </div>
+          </div>
+        </div>        
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Simple mock data for dynamic bits
+  const mock = {
+    matchStartTime: Date.now() - 65 * 60 * 1000,
+    pointHistory: Array.from({length:142}, () => Math.random() < 0.51 ? "team-1" : "team-2"),
+    team1ServicePointsWon: 36,
+    team2ServicePointsWon: 32
+  };
+
+  // Toolbar switching
+  const buttons = document.querySelectorAll('.toolbar button');
+  const screens = ['results','totals','momentum','service'];
+  buttons.forEach(btn => btn.addEventListener('click', () => {
+    buttons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.target;
+    screens.forEach(id => document.getElementById(id).classList.toggle('hidden', id !== target));
+  }));
+
+  // Compute game length
+  const mins = Math.max(0, Math.floor((Date.now() - mock.matchStartTime)/60000));
+  const lengthEl = document.getElementById('lengthVal');
+  if (lengthEl) lengthEl.textContent = `${mins}m`;
+
+  // Points bars (demo calc)
+  const t1 = mock.pointHistory.filter(p => p === "team-1").length;
+  const t2 = mock.pointHistory.filter(p => p === "team-2").length;
+  const maxP = Math.max(t1, t2, 1);
+  const t1Bar = document.getElementById('t1Bar'), t2Bar = document.getElementById('t2Bar');
+  const t1Val = document.getElementById('t1Val'), t2Val = document.getElementById('t2Val');
+  if (t1Bar) t1Bar.style.width = ((t1/maxP)*80) + '%';
+  if (t2Bar) t2Bar.style.width = ((t2/maxP)*80) + '%';
+  if (t1Val) t1Val.textContent = t1;
+  if (t2Val) t2Val.textContent = t2;
+
+  // Momentum dots (98 bins)
+  const momGrid = document.getElementById('momGrid');
+  if (momGrid) {
+    const totalDots = 98;
+    const ph = mock.pointHistory;
+    const total = ph.length;
+    const per = Math.max(1, Math.ceil(total / totalDots));
+    for (let i=0;i<totalDots;i++) {
+      const s = i*per, e = Math.min(s+per, total);
+      let c1=0,c2=0;
+      for (let j=s;j<e;j++) ph[j]==="team-1" ? c1++ : c2++;
+      let cls = 'neutral';
+      if (c1>c2) cls = 't1';
+      else if (c2>c1) cls = 't2';
+      else if (e>s) cls = ph[e-1]==="team-1" ? 't1' : 't2';
+      const d = document.createElement('div');
+      d.className = 'dot ' + cls;
+      momGrid.appendChild(d);
+    }
+  }
+
+  // Service bars
+  const s1 = mock.team1ServicePointsWon, s2 = mock.team2ServicePointsWon;
+  const sMax = Math.max(s1, s2, 1);
+  const svc1 = document.getElementById('svc1'), svc2 = document.getElementById('svc2');
+  const svc1Val = document.getElementById('svc1Val'), svc2Val = document.getElementById('svc2Val');
+  if (svc1) svc1.style.width = ((s1/sMax)*70)+'%';
+  if (svc2) svc2.style.width = ((s2/sMax)*70)+'%';
+  if (svc1Val) svc1Val.textContent = s1;
+  if (svc2Val) svc2Val.textContent = s2;
+</script>
+</body>
+</html>
