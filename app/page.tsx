@@ -1032,7 +1032,7 @@ export default function PadelScoring() {
         }
       }
 
-      if (e.key.toLowerCase() === "r" && !gameState.gameStarted && !showCoinToss) {
+      if (e.key.toLowerCase() === "h" && !gameState.gameStarted && !showCoinToss) {
         resetGame()
       }
     }
