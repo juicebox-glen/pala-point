@@ -1,7 +1,44 @@
-"use client"
+'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import ConfettiExplosion from "react-confetti-explosion"
+
+function useFlicWS() {
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    let retry: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = () => {
+      ws = new WebSocket('ws://localhost:4001');
+      ws.onopen = () => console.log('Connected to Flic bridge');
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg?.type !== 'command') return;
+          const map: Record<string,string> = {
+            SCORE_LEFT: 'q', 
+            SCORE_RIGHT: 'p', 
+            UNDO: 'a', 
+            HOLD: 'h'
+          };
+          const key = map[msg.cmd];
+          if (key) {
+            console.log(`Flic command: ${msg.cmd} -> ${key}`);
+            window.dispatchEvent(new KeyboardEvent('keydown', { key }));
+          }
+        } catch {}
+      };
+      ws.onclose = () => { 
+        console.log('WS disconnected, retrying...');
+        retry = setTimeout(connect, 1000); 
+      };
+      ws.onerror  = () => { try { ws?.close(); } catch {} };
+    };
+
+    connect();
+    return () => { if (retry) clearTimeout(retry); ws?.close(); };
+  }, []);
+}
 
 // Screensaver configuration
 const SCREENSAVER_CONFIG = {
@@ -60,7 +97,8 @@ interface GameState {
   swapSidesTimerActive: boolean
 }
 
-export default function PadelScoringSystem() {
+export default function PadelScoring() {
+  useFlicWS(); // Add this line
   const [gameState, setGameState] = useState<GameState>({
     team1Score: "0",
     team2Score: "0",
