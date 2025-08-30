@@ -1369,12 +1369,12 @@ useEffect(() => {
             .selection-title {
               z-index: 100;
               color: white;
-              padding: 2vw;
+              padding: 1.5vw;
               font-family: 'Inter', system-ui, sans-serif;
               font-variant-numeric: tabular-nums;
-              font-size: 3.5vw;
+              font-size: 3.3vw;
               font-weight: 600;
-              margin-bottom: 8vw;
+              margin-bottom: 7vw;
               text-align: center;
               letter-spacing: 0.1em;
             }
@@ -1382,7 +1382,7 @@ useEffect(() => {
             .game-type-options {
               display: flex;
               gap: 2vw;
-              margin-bottom: 4vw;
+              margin-bottom: 3.5vw;
               flex-wrap: wrap;
               justify-content: center;
             }
