@@ -1369,10 +1369,10 @@ useEffect(() => {
             .selection-title {
               z-index: 100;
               color: white;
-              padding: 1.5vw;
+              padding: 1vw;
               font-family: 'Inter', system-ui, sans-serif;
               font-variant-numeric: tabular-nums;
-              font-size: 3.3vw;
+              font-size: 3vw;
               font-weight: 600;
               margin-bottom: 7vw;
               text-align: center;
@@ -1382,7 +1382,7 @@ useEffect(() => {
             .game-type-options {
               display: flex;
               gap: 2vw;
-              margin-bottom: 3.5vw;
+              margin-bottom: 3vw;
               flex-wrap: wrap;
               justify-content: center;
             }
@@ -2938,10 +2938,10 @@ useEffect(() => {
               --game-score-font-size: 7.4vw;
               --set-indicator-size: 3vw;
               --set-indicator-gap: 1.5vw;
-              --team-name-margin-top: 8vw;
-              --score-display-margin-top: 1vw;
-              --set-indicators-bottom: 8.5vw;
-              --game-score-bottom: 6.5vw;
+              --team-name-margin-top: 6.5vw;
+              --score-display-margin-top: 1.5vw;
+              --set-indicators-bottom: 7vw;
+              --game-score-bottom: 5vw;
               --serving-indicator-height: 1.5vw;
             }
 
