@@ -19,7 +19,7 @@ function useFlicWS() {
             SCORE_LEFT: 'q', 
             SCORE_RIGHT: 'p', 
             UNDO: 'a', 
-            HOLD: 'h'
+            HOLD: 'r'
           };
           const key = map[msg.cmd];
           if (key) {
@@ -960,100 +960,96 @@ export default function PadelScoring() {
     }
   }, [showSetWin, showCoinToss, serverSelectionPhase])
 
-  // Keyboard event handler
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      registerActivity()
+// Keyboard event handler
+useEffect(() => {
+  const handleKeyPress = (e: KeyboardEvent) => {
+    registerActivity()
 
-      if (["q", "p", "a", "l", " ", "Enter", "h", "r", "k"].includes(e.key.toLowerCase()) || e.key === " ") {
-        e.preventDefault()
-      }
-
-      if (!gameState.gameStarted && !showCoinToss) {
-        if (e.key.toLowerCase() === "q" || e.key.toLowerCase() === "p") {
-          switchGameType()
-        } else if (e.key.toLowerCase() === "h") {
-          startGame()
-        }
-      } else if (showCoinToss && serverSelectionPhase === 2) {
-        setGameState((prev) => ({
-          ...prev,
-          gameStarted: true,
-          gameType: prev.selectedGameType,
-          team1Score: "0",
-          team2Score: "0",
-          team1Games: 0,
-          team2Games: 0,
-          team1Sets: 0,
-          team2Sets: 0,
-          inTieBreak: false,
-          matchWinner: null,
-          servingTeam: coinTossResult || 1,
-          sidesSwapped: false,
-          shouldSwapSides: false,
-          swapSidesTimerActive: false,
-          pointsPlayedInTieBreak: 0,
-          matchStartTime: Date.now(),
-        }))
-        setGameStateHistory([])
-        setShowCoinToss(false)
-        setCoinTossResult(null)
-        setServerSelectionPhase(1)
-      } else {
-        if (showSetWin) {
-          setShowSetWin(false)
-          setSetWinData(null)
-        } else if (e.key.toLowerCase() === "q") {
-          scorePointForSide("left")
-        } else if (e.key.toLowerCase() === "p") {
-          scorePointForSide("right")
-        } else if (e.key.toLowerCase() === "a") {
-          undoPointForSide("left")
-        } else if (e.key.toLowerCase() === "l") {
-          undoPointForSide("right")
-        } else if (e.key.toLowerCase() === "r") {
-          resetGame()
-        } else if (showStatsSlideshow) {
-          if (e.key.toLowerCase() === "q" || e.key.toLowerCase() === "p") {
-            navigateSlide("next")
-          } else if (e.key.toLowerCase() === "a" || e.key.toLowerCase() === "l") {
-            navigateSlide("prev")
-          }
-        } else if (e.key.toLowerCase() === "q") {
-          scorePointForSide("left")
-        } else if (e.key.toLowerCase() === "p") {
-          scorePointForSide("right")
-        } else if (e.key.toLowerCase() === "a") {
-          undoPointForSide("left")
-        } else if (e.key.toLowerCase() === "l") {
-          undoPointForSide("right")
-        } else if (e.key.toLowerCase() === "h" && gameState.gameStarted) {
-          resetGame()
-        }
-      }
-
-      if (e.key.toLowerCase() === "r" && !gameState.gameStarted && !showCoinToss) {
-        resetGame()
-      }
+    if (["q", "p", "a", "l", " ", "Enter", "r", "k"].includes(e.key.toLowerCase()) || e.key === " ") {
+      e.preventDefault()
     }
 
-    window.addEventListener("keydown", handleKeyPress)
-    return () => window.removeEventListener("keydown", handleKeyPress)
-  }, [
-    gameState,
-    scorePointForSide,
-    undoPointForSide,
-    switchGameType,
-    startGame,
-    resetGame,
-    showStatsSlideshow,
-    navigateSlide,
-    registerActivity,
-    showSetWin,
-    serverSelectionPhase,
-    coinTossResult,
-    showCoinToss,
-  ])
+    const key = e.key.toLowerCase();
+
+    // Single key behavior: start if pre-game, otherwise reset
+    if (key === 'r') {
+      if (!gameState.gameStarted && !showCoinToss) {
+        // Game Select screen - start with selected type
+        startGame();
+      } else {
+        // In-game, stats slideshow, or anywhere else - reset
+        resetGame();
+      }
+      return;
+    }
+
+    if (!gameState.gameStarted && !showCoinToss) {
+      if (e.key.toLowerCase() === "q" || e.key.toLowerCase() === "p") {
+        switchGameType()
+      }
+    } else if (showCoinToss && serverSelectionPhase === 2) {
+      setGameState((prev) => ({
+        ...prev,
+        gameStarted: true,
+        gameType: prev.selectedGameType,
+        team1Score: "0",
+        team2Score: "0",
+        team1Games: 0,
+        team2Games: 0,
+        team1Sets: 0,
+        team2Sets: 0,
+        inTieBreak: false,
+        matchWinner: null,
+        servingTeam: coinTossResult || 1,
+        sidesSwapped: false,
+        shouldSwapSides: false,
+        swapSidesTimerActive: false,
+        pointsPlayedInTieBreak: 0,
+        matchStartTime: Date.now(),
+      }))
+      setGameStateHistory([])
+      setShowCoinToss(false)
+      setCoinTossResult(null)
+      setServerSelectionPhase(1)
+    } else {
+      if (showSetWin) {
+        setShowSetWin(false)
+        setSetWinData(null)
+      } else if (e.key.toLowerCase() === "q") {
+        scorePointForSide("left")
+      } else if (e.key.toLowerCase() === "p") {
+        scorePointForSide("right")
+      } else if (e.key.toLowerCase() === "a") {
+        undoPointForSide("left")
+      } else if (e.key.toLowerCase() === "l") {
+        undoPointForSide("right")
+      } else if (showStatsSlideshow) {
+        if (e.key.toLowerCase() === "q" || e.key.toLowerCase() === "p") {
+          navigateSlide("next")
+        } else if (e.key.toLowerCase() === "a" || e.key.toLowerCase() === "l") {
+          navigateSlide("prev")
+        }
+      }
+    }
+  }
+
+  window.addEventListener("keydown", handleKeyPress)
+  return () => window.removeEventListener("keydown", handleKeyPress)
+}, [
+  gameState,
+  scorePointForSide,
+  undoPointForSide,
+  switchGameType,
+  startGame,
+  resetGame,
+  showStatsSlideshow,
+  navigateSlide,
+  registerActivity,
+  showSetWin,
+  serverSelectionPhase,
+  coinTossResult,
+  showCoinToss,
+])
 
   // Activity detection with throttling
   useEffect(() => {
@@ -1460,9 +1456,9 @@ export default function PadelScoring() {
             }
 
             .selection-instructions {
-              font-size: 2.5vw;
+              font-size: 2vw;
               color: #B3B3B3;
-              margin-top: 2.5vw;
+              margin-top: 1.5vw;
               text-align: center;
               letter-spacing: 0.05em;
               font-weight: 500;
@@ -1570,7 +1566,7 @@ export default function PadelScoring() {
               padding: 1.5vw 3vw;
               text-align: center;
               display: inline-block;
-              margin-top: 3vw;
+              margin-top: 2vw;
               z-index: 10;
             }
 
