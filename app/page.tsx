@@ -664,7 +664,7 @@ export default function PadelScoring() {
                 setShowSwapMessage(false)
                 setSwapAnimationActive(false)
                 swapSidesTimerRef.current = null
-              }, 500)
+              }, 10000)
 
               swapSidesTimerRef.current = timerId
             }
@@ -824,7 +824,7 @@ export default function PadelScoring() {
 
     const timer = setTimeout(() => {
       setCurrentStatsSlide((prev) => (prev >= 3 ? 0 : prev + 1))
-    }, 10000)
+    }, 15000)
 
     autoSlideTimerRef.current = timer
 
@@ -1382,7 +1382,7 @@ useEffect(() => {
             .game-type-options {
               display: flex;
               gap: 2vw;
-              margin-bottom: 3vw;
+              margin-bottom: 4vw;
               flex-wrap: wrap;
               justify-content: center;
             }
@@ -1991,7 +1991,7 @@ useEffect(() => {
         </div>
       </div>
       <div className="layout-section blue full-width">
-        <div className="section-title">POINTS WON</div>
+        <div className="section-title-points">POINTS WON</div>
         <div className="section-content">
           <div className="points-bars-layout">
             {(() => {
@@ -2259,12 +2259,12 @@ useEffect(() => {
 
             .stats-slideshow.grid-layout {
   justify-content: flex-start;
-  padding-top: 4vw;
+  padding-top: 1.5vw;
 }
 
            .stats-slide {
   text-align: center;
-  max-width: 80vw;
+  width: 70.5vw;
   animation: slideIn 0.5s ease-in;
    background-color: #121212;
   border-radius: 2vw;
@@ -2278,8 +2278,8 @@ useEffect(() => {
 
 /* New Layout Grid Styles */
 .stats-slide-layout {
-  width: 78vw;
-  height: 91.3vh;
+  width: 70.5vw;
+  height: 94vh;
   animation: slideIn 0.5s ease-in;
 }
 
@@ -2304,9 +2304,9 @@ useEffect(() => {
 .layout-grid-3-flipped .layout-section.full-width {
   grid-column: 1 / -1;
   grid-row: 1;
-  padding-top: 4vw;
-  margin-bottom: 2vw;
-  margin-top: -3.2vw; /* Pull up to cover court line */
+  
+  
+  margin-top: -0.7vw; /* Pull up to cover court line */
 }
 
 .layout-grid-3-flipped .layout-section:not(.full-width) {
@@ -2336,6 +2336,7 @@ useEffect(() => {
 
 .layout-section.blue {
   background-color: #121212;
+  margin-top: 3vw;
 }
 
 .breaks-display-layout {
@@ -2350,7 +2351,15 @@ useEffect(() => {
   font-size: 2.5vw;
   font-weight: bold;
   color: #fff;
-  margin-bottom: 2vw;
+  
+  letter-spacing: 0.1em;
+}
+
+.section-title-points {
+font-size: 2.5vw;
+  font-weight: bold;
+  color: #fff;
+  
   letter-spacing: 0.1em;
 }
 
@@ -2382,6 +2391,7 @@ useEffect(() => {
   align-items: center;
   gap: 2vw;
   width: 100%;
+  height: 12.5vh;
 }
 
 .bar-fill {
@@ -2419,7 +2429,11 @@ useEffect(() => {
               font-weight: 600;
               margin-bottom: 3vw;
               color: #ffffff;
-              text-shadow: 0 0 1vw rgba(250, 204, 21, 0.5);
+              font-family: 'Inter', system-ui, sans-serif;
+              font-variant-numeric: tabular-nums;
+              text-align: center;
+              letter-spacing: 0.1em;
+              
             }
 
             .stats-content {
@@ -2463,7 +2477,7 @@ useEffect(() => {
 .set-score-main {
   display: flex;
   align-items: center;
-  gap: 0.5vw;
+  gap: 1vw;
 }
 
             .set-score-number {
@@ -2485,7 +2499,7 @@ useEffect(() => {
 
            .stats-navigation {
   position: absolute;
-  left: 3.5vw;
+  left: 5.5vw;
   top: 51.5%;
   transform: translateY(-50%);
   text-align: center;
@@ -2938,7 +2952,7 @@ useEffect(() => {
               --game-score-font-size: 7.4vw;
               --set-indicator-size: 3vw;
               --set-indicator-gap: 1.5vw;
-              --team-name-margin-top: 6.5vw;
+              --team-name-margin-top: 6vw;
               --score-display-margin-top: 1.5vw;
               --set-indicators-bottom: 7vw;
               --game-score-bottom: 5vw;
