@@ -49,6 +49,12 @@ const SCREENSAVER_CONFIG = {
 
 type GameScore = "0" | "15" | "30" | "40" | "ADV"
 
+// Americano configuration
+const SERVES_PER_TURN = 4
+const SWAP_EVERY_SERVES = 16
+const SWAP_MSG_MS = 10000
+
+
 interface GameState {
   // Core game state
   team1Score: GameScore | string
@@ -80,6 +86,14 @@ interface GameState {
 
   // Tiebreak specific
   pointsPlayedInTieBreak: number
+  deuceCount: number
+
+  // Americano mode specific
+servesInCurrentTurn: number
+totalServesPlayed: number
+americanoTeam1Points: number
+americanoTeam2Points: number
+
 
   // Set history for final display
   setHistory: Array<{
@@ -125,6 +139,11 @@ export default function PadelScoring() {
     longestWinningStreak: { team: 0, streak: 0 },
     currentStreak: { team: 0, streak: 0 },
     pointsPlayedInTieBreak: 0,
+    deuceCount: 0,
+    servesInCurrentTurn: 0,
+totalServesPlayed: 0,
+americanoTeam1Points: 0,
+americanoTeam2Points: 0,
     setHistory: [],
     shouldSwapSides: false,
     swapSidesTimerActive: false,
@@ -168,6 +187,33 @@ export default function PadelScoring() {
   const ballAnimationRef = useRef<number | null>(null)
 
   const MAX_HISTORY_SIZE = 50
+
+  // Swap-timer generation token + helpers
+const swapTimerGenRef = useRef(0)
+
+const cancelSwapTimer = useCallback(() => {
+  swapTimerGenRef.current++
+  if (swapSidesTimerRef.current) {
+    clearTimeout(swapSidesTimerRef.current)
+    swapSidesTimerRef.current = null
+  }
+}, [])
+
+const startSwapTimer = useCallback((delayMs: number, fn: () => void) => {
+  // cancel any existing
+  cancelSwapTimer()
+  const genAtStart = ++swapTimerGenRef.current
+  swapSidesTimerRef.current = setTimeout(() => {
+    // ignore stale timers
+    if (genAtStart !== swapTimerGenRef.current) return
+    swapSidesTimerRef.current = null
+    fn()
+  }, delayMs)
+}, [cancelSwapTimer])
+
+// ensure cleanup on unmount
+useEffect(() => () => cancelSwapTimer(), [cancelSwapTimer])
+
 
   // Memoized calculations to prevent unnecessary re-renders
   const teamPositions = useMemo(
@@ -229,12 +275,10 @@ export default function PadelScoring() {
     setGameState(previousState)
 
     // Clean up any active swap timer
-    if (swapSidesTimerRef.current) {
-      clearTimeout(swapSidesTimerRef.current)
-      swapSidesTimerRef.current = null
-    }
+    cancelSwapTimer()
     setShowSwapMessage(false)
     setSwapAnimationActive(false)
+    
 
     setUndoNotification("UNDOING LAST ACTION")
     setTimeout(() => setUndoNotification(""), 2000)
@@ -261,9 +305,7 @@ export default function PadelScoring() {
 
   const checkSideSwap = useCallback((state: GameState): boolean => {
     if (state.gameType === "casual") {
-      const totalGames = state.team1Games + state.team2Games
-      if (totalGames > 0 && totalGames % 4 === 0) return true
-      if (state.inTieBreak && state.pointsPlayedInTieBreak > 0 && state.pointsPlayedInTieBreak % 6 === 0) return true
+      // Americano swaps are handled via totalServesPlayed inside the scoring branch
       return false
     }
 
@@ -276,6 +318,10 @@ export default function PadelScoring() {
   const getPointSituation = useCallback(
     (state: GameState): { type: "set" | "match" | "tiebreak" | null; team: number | null } => {
       if (!state.gameStarted || state.matchWinner) return { type: null, team: null }
+
+      // Americano mode doesn't use tennis point situations
+if (state.gameType === "casual") return { type: null, team: null }
+
 
       if (state.inTieBreak) {
         const score1 = Number.parseInt(state.team1Score as string)
@@ -320,14 +366,29 @@ export default function PadelScoring() {
         let setPointTeam = null
 
         if (state.gameType === "golden-point") {
-          if (team1NumScore >= 3 && team2NumScore >= 3) {
-            if (team1NumScore > team2NumScore) setPointTeam = 1
-            else if (team2NumScore > team1NumScore) setPointTeam = 2
-          } else if (team1NumScore >= 3 && state.team1Games >= 5 && state.team1Games - state.team2Games >= 1) {
+          // Only ever show SET POINT if a single point can win the GAME *and* the SET.
+        
+          // 1) Are we one game away from the set?
+          const nearSetFor1 = (state.team1Games === 5 && state.team2Games <= 4) || (state.team1Games === 6 && state.team2Games === 5)
+          const nearSetFor2 = (state.team2Games === 5 && state.team1Games <= 4) || (state.team2Games === 6 && state.team1Games === 5)
+        
+          // 2) Would THIS point win the game?
+          // Silver Point: after the first deuce, any deuce point (40-40) is a one-ball decider.
+          const silverDeciderNow = state.deuceCount >= 1 && team1NumScore === 3 && team2NumScore === 3
+        
+          // Otherwise, we’re in normal advantage: a side wins the game on this point
+          // only if they’re already ahead at 40/ADV.
+          const thisPointWinsGameFor1 = silverDeciderNow || (team1NumScore >= 3 && team1NumScore > team2NumScore)
+          const thisPointWinsGameFor2 = silverDeciderNow || (team2NumScore >= 3 && team2NumScore > team1NumScore)
+        
+          // 3) Set the SET POINT indicator only when both conditions are true.
+          if (nearSetFor1 && thisPointWinsGameFor1) {
             setPointTeam = 1
-          } else if (team2NumScore >= 3 && state.team2Games >= 5 && state.team2Games - state.team1Games >= 1) {
+          } else if (nearSetFor2 && thisPointWinsGameFor2) {
             setPointTeam = 2
           }
+        
+        
         } else {
           if (
             team1NumScore >= 3 &&
@@ -420,6 +481,12 @@ export default function PadelScoring() {
           newState.team1Score = tieBreakScore1.toString()
           newState.team2Score = tieBreakScore2.toString()
           newState.pointsPlayedInTieBreak++
+          
+          // Tiebreak serving: first point only, then every 2 points
+          if (newState.pointsPlayedInTieBreak === 1 || 
+              (newState.pointsPlayedInTieBreak > 1 && (newState.pointsPlayedInTieBreak - 1) % 2 === 0)) {
+            newState.servingTeam = newState.servingTeam === 1 ? 2 : 1
+          }
 
           // Check for tiebreak winner
           if ((tieBreakScore1 >= 7 || tieBreakScore2 >= 7) && Math.abs(tieBreakScore1 - tieBreakScore2) >= 2) {
@@ -479,17 +546,65 @@ export default function PadelScoring() {
             return newState
           }
         } else {
-          // Regular game scoring
+          // --- AMERICANO: simple points + serve rotation + timed side-swap ---
+          if (prev.gameType === "casual") {
+            // 1) Add one point to the correct Americano counter
+            if (team === "team1") {
+              newState.americanoTeam1Points++
+            } else {
+              newState.americanoTeam2Points++
+            }
+        
+            // 2) Count serves and total serves
+            newState.servesInCurrentTurn++
+            newState.totalServesPlayed++
+        
+            // 3) Change server every SERVES_PER_TURN
+            if (newState.servesInCurrentTurn >= SERVES_PER_TURN) {
+              newState.servingTeam = newState.servingTeam === 1 ? 2 : 1
+              newState.servesInCurrentTurn = 0
+            }
+        
+            // 4) Side swap every SWAP_EVERY_SERVES (with message + timer)
+            if (newState.totalServesPlayed > 0 && newState.totalServesPlayed % SWAP_EVERY_SERVES === 0) {
+              newState.shouldSwapSides = true
+              newState.swapSidesTimerActive = true
+        
+              setShowSwapMessage(true)
+              setSwapAnimationActive(true)
+        
+              startSwapTimer(SWAP_MSG_MS, () => {
+                setGameState((current) => {
+                  if (current.swapSidesTimerActive && current.shouldSwapSides) {
+                    return {
+                      ...current,
+                      sidesSwapped: !current.sidesSwapped,
+                      shouldSwapSides: false,
+                      swapSidesTimerActive: false,
+                    }
+                  }
+                  return current
+                })
+                setShowSwapMessage(false)
+                setSwapAnimationActive(false)
+              })
+            }
+        
+            // 5) IMPORTANT: Americano never falls through to tennis logic
+            return newState
+          }
+        
+          // Regular game scoring (Tennis: Standard/Silver) — keep your existing code below this line
           let team1NumScore =
             prev.team1Score === "ADV"
               ? 4
               : prev.team1Score === "40"
-                ? 3
-                : prev.team1Score === "30"
-                  ? 2
-                  : prev.team1Score === "15"
-                    ? 1
-                    : 0
+              ? 3
+              : prev.team1Score === "30"
+              ? 2
+              : prev.team1Score === "15"
+              ? 1
+              : 0
           let team2NumScore =
             prev.team2Score === "ADV"
               ? 4
@@ -508,29 +623,60 @@ export default function PadelScoring() {
           }
 
           let gameWon = false
+
+          // Helper to convert score strings to numbers
+          const toNum = (s: string) => (s === "0" ? 0 : s === "15" ? 1 : s === "30" ? 2 : s === "40" ? 3 : 4)
+          
+          // Check PRE-POINT state to determine if this should be a golden point
+          const prevT1 = toNum(prev.team1Score)
+          const prevT2 = toNum(prev.team2Score)
+          const wasDeuceBeforePoint = prevT1 === 3 && prevT2 === 3
+          
+          // Silver Point: second+ deuce becomes golden point
+          const silverGoldenOnThisPoint = 
+            prev.gameType === "golden-point" && wasDeuceBeforePoint && prev.deuceCount >= 1
+          
+          // Mark first time reaching deuce
+          const firstTimeAtDeuce = 
+            prev.gameType === "golden-point" && wasDeuceBeforePoint && prev.deuceCount === 0
+          if (firstTimeAtDeuce) {
+            newState.deuceCount = 1
+          }
+          
           if (prev.gameType === "golden-point") {
-            if (team1NumScore >= 4 && team2NumScore >= 4) {
+            if (silverGoldenOnThisPoint) {
+              // Second+ deuce: THIS point decides the game
               gameWon = true
-            } else if ((team1NumScore >= 4 || team2NumScore >= 4) && Math.abs(team1NumScore - team2NumScore) >= 1) {
-              gameWon = true
+            } else {
+              // Otherwise: play normal advantage tennis (win-by-two)
+              if (team1NumScore >= 4 || team2NumScore >= 4) {
+                if (Math.abs(team1NumScore - team2NumScore) >= 2) {
+                  gameWon = true
+                } else if (team1NumScore >= 4 && team2NumScore >= 4) {
+                  // Render ADV/40 correctly for the scoreboard
+                  if (team1NumScore > team2NumScore) {
+                    team1NumScore = 4; team2NumScore = 3 // ADV / 40
+                  } else if (team2NumScore > team1NumScore) {
+                    team2NumScore = 4; team1NumScore = 3 // ADV / 40
+                  } else {
+                    // Back to deuce
+                    team1NumScore = 3; team2NumScore = 3
+                  }
+                }
+              }
             }
           } else {
-            // Standard scoring with advantage
+            // Standard mode unchanged (win-by-two)
             if (team1NumScore >= 4 && team2NumScore >= 4) {
               if (Math.abs(team1NumScore - team2NumScore) >= 2) {
                 gameWon = true
               } else {
-                // Handle advantage/deuce logic
                 if (team1NumScore > team2NumScore) {
-                  team1NumScore = 4 // ADV
-                  team2NumScore = 3 // 40
+                  team1NumScore = 4; team2NumScore = 3
                 } else if (team2NumScore > team1NumScore) {
-                  team2NumScore = 4 // ADV
-                  team1NumScore = 3 // 40
+                  team2NumScore = 4; team1NumScore = 3
                 } else {
-                  // Back to deuce
-                  team1NumScore = 3 // 40
-                  team2NumScore = 3 // 40
+                  team1NumScore = 3; team2NumScore = 3
                 }
               }
             } else if ((team1NumScore >= 4 || team2NumScore >= 4) && Math.abs(team1NumScore - team2NumScore) >= 2) {
@@ -560,6 +706,7 @@ export default function PadelScoring() {
             // Reset points and change server
             newState.team1Score = "0"
             newState.team2Score = "0"
+            newState.deuceCount = 0
             newState.servingTeam = newState.servingTeam === 1 ? 2 : 1
 
             // Check for set winner or tiebreak
@@ -639,46 +786,42 @@ export default function PadelScoring() {
               }
             }
 
-            // Check for side swap
-            if (!newState.matchWinner && checkSideSwap(newState)) {
-              newState.shouldSwapSides = true
-              newState.swapSidesTimerActive = true
+// Check for side swap
+if (!newState.matchWinner && checkSideSwap(newState)) {
+  newState.shouldSwapSides = true
+  newState.swapSidesTimerActive = true
 
-              setShowSwapMessage(true)
-              setSwapAnimationActive(true)
+  setShowSwapMessage(true)
+  setSwapAnimationActive(true)
 
-              // Use a more resilient timer approach
-              const timerId = setTimeout(() => {
-                setGameState((current) => {
-                  // Only swap if we're still in the swap state
-                  if (current.swapSidesTimerActive && current.shouldSwapSides) {
-                    return {
-                      ...current,
-                      sidesSwapped: !current.sidesSwapped,
-                      shouldSwapSides: false,
-                      swapSidesTimerActive: false,
-                    }
-                  }
-                  return current
-                })
-                setShowSwapMessage(false)
-                setSwapAnimationActive(false)
-                swapSidesTimerRef.current = null
-              }, 10000)
-
-              swapSidesTimerRef.current = timerId
-            }
-          } else {
-            newState.team1Score = getDisplayScore(team1NumScore)
-            newState.team2Score = getDisplayScore(team2NumScore)
-          }
+  startSwapTimer(SWAP_MSG_MS, () => {
+    setGameState((current) => {
+      if (current.swapSidesTimerActive && current.shouldSwapSides) {
+        return {
+          ...current,
+          sidesSwapped: !current.sidesSwapped,
+          shouldSwapSides: false,
+          swapSidesTimerActive: false,
         }
+      }
+      return current
+    })
+    setShowSwapMessage(false)
+    setSwapAnimationActive(false)
+  })
+}
+} else {
+// No game yet — just update the running point display
+newState.team1Score = getDisplayScore(team1NumScore)
+newState.team2Score = getDisplayScore(team2NumScore)
+}
+}
 
-        return newState
-      })
-    },
-    [gameState, saveStateToHistory, registerActivity, getDisplayScore, checkSideSwap],
-  )
+return newState
+})
+},
+[gameState, saveStateToHistory, registerActivity, getDisplayScore, checkSideSwap, startSwapTimer],
+)
 
   // Undo function
   const undoPointForSide = useCallback(
@@ -714,16 +857,39 @@ export default function PadelScoring() {
   const switchGameType = useCallback(() => {
     if (gameState.gameStarted) return
     registerActivity()
-    setGameState((prev) => ({
-      ...prev,
-      selectedGameType:
+  
+    setGameState((prev) => {
+      const nextType =
         prev.selectedGameType === "standard"
           ? "golden-point"
           : prev.selectedGameType === "golden-point"
             ? "casual"
-            : "standard",
-    }))
-  }, [gameState.gameStarted, registerActivity])
+            : "standard"
+  
+      // kill any pending side-swap timers when changing modes
+      cancelSwapTimer()
+  
+      const base = { ...prev, selectedGameType: nextType }
+  
+      // Americano hygiene on entry
+      if (nextType === "casual") {
+        return {
+          ...base,
+          inTieBreak: false,
+          team1Score: "0",
+          team2Score: "0",
+          servesInCurrentTurn: 0,
+          totalServesPlayed: 0,
+          americanoTeam1Points: 0,
+          americanoTeam2Points: 0,
+          shouldSwapSides: false,
+          swapSidesTimerActive: false,
+        }
+      }
+      return base
+    })
+  }, [gameState.gameStarted, registerActivity, cancelSwapTimer])
+  
 
   const startGame = useCallback(() => {
     if (gameState.gameStarted) return
@@ -743,11 +909,9 @@ export default function PadelScoring() {
   const resetGame = useCallback(() => {
     registerActivity()
 
-    // Clear all timers
-    if (swapSidesTimerRef.current) {
-      clearTimeout(swapSidesTimerRef.current)
-      swapSidesTimerRef.current = null
-    }
+  // Clear all timers
+cancelSwapTimer()
+
     if (autoSlideTimerRef.current) {
       clearTimeout(autoSlideTimerRef.current)
       autoSlideTimerRef.current = null
@@ -782,6 +946,14 @@ export default function PadelScoring() {
       longestWinningStreak: { team: 0, streak: 0 },
       currentStreak: { team: 0, streak: 0 },
       pointsPlayedInTieBreak: 0,
+      deuceCount: 0,
+
+      // Americano
+    servesInCurrentTurn: 0,
+    totalServesPlayed: 0,
+    americanoTeam1Points: 0,
+    americanoTeam2Points: 0,
+
       setHistory: [],
       shouldSwapSides: false,
       swapSidesTimerActive: false,
@@ -988,30 +1160,46 @@ useEffect(() => {
         switchGameType()
       }
     } else if (showCoinToss && serverSelectionPhase === 2) {
-      setGameState((prev) => ({
-        ...prev,
-        gameStarted: true,
-        gameType: prev.selectedGameType,
-        team1Score: "0",
-        team2Score: "0",
-        team1Games: 0,
-        team2Games: 0,
-        team1Sets: 0,
-        team2Sets: 0,
-        inTieBreak: false,
-        matchWinner: null,
-        servingTeam: coinTossResult || 1,
-        sidesSwapped: false,
-        shouldSwapSides: false,
-        swapSidesTimerActive: false,
-        pointsPlayedInTieBreak: 0,
-        matchStartTime: Date.now(),
-      }))
+      cancelSwapTimer()
+      setGameState((prev) => {
+        const base = {
+          ...prev,
+          gameStarted: true,
+          gameType: prev.selectedGameType,
+          team1Score: "0",
+          team2Score: "0",
+          team1Games: 0,
+          team2Games: 0,
+          team1Sets: 0,
+          team2Sets: 0,
+          inTieBreak: false,
+          matchWinner: null,
+          servingTeam: coinTossResult || 1,
+          sidesSwapped: false,
+          shouldSwapSides: false,
+          swapSidesTimerActive: false,
+          pointsPlayedInTieBreak: 0,
+          matchStartTime: Date.now(),
+        }
+    
+        if (prev.selectedGameType === "casual") {
+          return {
+            ...base,
+            servesInCurrentTurn: 0,
+            totalServesPlayed: 0,
+            americanoTeam1Points: 0,
+            americanoTeam2Points: 0,
+          }
+        }
+    
+        return base
+      })
       setGameStateHistory([])
       setShowCoinToss(false)
       setCoinTossResult(null)
       setServerSelectionPhase(1)
-    } else {
+    }
+     else {
       if (showSetWin) {
         setShowSetWin(false)
         setSetWinData(null)
@@ -1312,8 +1500,8 @@ useEffect(() => {
                     className="game-type-icon-svg"
                   />
                 </div>
-                <div className="game-type-name">GOLDEN</div>
-                <div className="game-type-description">One deciding point at deuce</div>
+                <div className="game-type-name">SILVER</div>
+                <div className="game-type-description">Advantage first, then golden point</div>
               </div>
 
               <div className={`game-type-option ${gameState.selectedGameType === "casual" ? "selected" : ""}`}>
@@ -1328,8 +1516,9 @@ useEffect(() => {
                     className="game-type-icon-svg"
                   />
                 </div>
-                <div className="game-type-name">CASUAL</div>
-                <div className="game-type-description">Single set, swap every 4 games</div>
+                <div className="game-type-name">AMERICANO</div>
+<div className="game-type-description">Point counting · 4 serves/team</div>
+
               </div>
             </div>
 
@@ -2855,55 +3044,129 @@ font-size: 2.5vw;
               </div>
             )}
 
-            <div className="main-layout">
-              <div className="team-column">
-                <div className="team-name">{teamPositions.leftTeam === "team1" ? "TEAM 1" : "TEAM 2"}</div>
-                <div className="score-display">
-                  <div
-                    className={`${teamPositions.leftScore === "ADV" ? "score-text-adv" : "score-text"} ${leftScoreAnimating ? "score-animate" : ""}`}
-                  >
-                    {teamPositions.leftScore}
-                  </div>
-                </div>
-                <div className="set-indicators set-indicators-left">
-                  <div
-                    className={`set-indicator ${teamPositions.leftSets >= 1 ? (gameState.sidesSwapped ? "set-indicator-won-team2" : "set-indicator-won-team1") : "set-indicator-not-won"}`}
-                  ></div>
-                  {gameState.gameType !== "casual" && (
-                    <div
-                      className={`set-indicator ${teamPositions.leftSets >= 2 ? (gameState.sidesSwapped ? "set-indicator-won-team2" : "set-indicator-won-team1") : "set-indicator-not-won"}`}
-                    ></div>
-                  )}
-                </div>
-              </div>
+<div className="main-layout">
+  <div className="team-column">
+    <div className="team-name">{teamPositions.leftTeam === "team1" ? "TEAM 1" : "TEAM 2"}</div>
 
-              <div className="team-column">
-                <div className="team-name">{teamPositions.rightTeam === "team1" ? "TEAM 1" : "TEAM 2"}</div>
-                <div className="score-display">
-                  <div
-                    className={`${teamPositions.rightScore === "ADV" ? "score-text-adv" : "score-text"} ${rightScoreAnimating ? "score-animate" : ""}`}
-                  >
-                    {teamPositions.rightScore}
-                  </div>
-                </div>
-                <div className="set-indicators set-indicators-right">
-                  <div
-                    className={`set-indicator ${teamPositions.rightSets >= 1 ? (gameState.sidesSwapped ? "set-indicator-won-team1" : "set-indicator-won-team2") : "set-indicator-not-won"}`}
-                  ></div>
-                  {gameState.gameType !== "casual" && (
-                    <div
-                      className={`set-indicator ${teamPositions.rightSets >= 2 ? (gameState.sidesSwapped ? "set-indicator-won-team1" : "set-indicator-won-team2") : "set-indicator-not-won"}`}
-                    ></div>
-                  )}
-                </div>
-              </div>
-            </div>
+    <div className="score-display">
+      <div
+        className={`${teamPositions.leftScore === "ADV" ? "score-text-adv" : "score-text"} ${
+          leftScoreAnimating ? "score-animate" : ""
+        }`}
+      >
+        {gameState.gameType === "casual"
+          ? (gameState.sidesSwapped ? gameState.americanoTeam2Points : gameState.americanoTeam1Points)
+          : teamPositions.leftScore}
+      </div>
+    </div>
 
-            <div className="game-score">
-              <div>
-                {teamPositions.leftGames} - {teamPositions.rightGames}
-              </div>
-            </div>
+    <div className="set-indicators set-indicators-left">
+      {gameState.gameType === "casual" ? (
+        (() => {
+          const servesRemaining = SERVES_PER_TURN - (gameState.servesInCurrentTurn ?? 0)
+          const leftIsServing = gameState.servingTeam === (gameState.sidesSwapped ? 2 : 1)
+          return leftIsServing
+            ? [1, 2, 3, 4].map((n) => (
+                <div
+                  key={n}
+                  className={`set-indicator ${
+                    n <= servesRemaining
+                      ? (gameState.sidesSwapped ? "set-indicator-won-team2" : "set-indicator-won-team1")
+                      : "set-indicator-not-won"
+                  }`}
+                />
+              ))
+            : [1, 2, 3, 4].map((n) => <div key={n} className="set-indicator set-indicator-not-won" />)
+        })()
+      ) : (
+        <>
+          <div
+            className={`set-indicator ${
+              teamPositions.leftSets >= 1
+                ? (gameState.sidesSwapped ? "set-indicator-won-team2" : "set-indicator-won-team1")
+                : "set-indicator-not-won"
+            }`}
+          />
+          {gameState.gameType !== "casual" && (
+            <div
+              className={`set-indicator ${
+                teamPositions.leftSets >= 2
+                  ? (gameState.sidesSwapped ? "set-indicator-won-team2" : "set-indicator-won-team1")
+                  : "set-indicator-not-won"
+              }`}
+            />
+          )}
+        </>
+      )}
+    </div>
+  </div>
+
+  <div className="team-column">
+    <div className="team-name">{teamPositions.rightTeam === "team1" ? "TEAM 1" : "TEAM 2"}</div>
+
+    <div className="score-display">
+      <div
+        className={`${teamPositions.rightScore === "ADV" ? "score-text-adv" : "score-text"} ${
+          rightScoreAnimating ? "score-animate" : ""
+        }`}
+      >
+        {gameState.gameType === "casual"
+          ? (gameState.sidesSwapped ? gameState.americanoTeam1Points : gameState.americanoTeam2Points)
+          : teamPositions.rightScore}
+      </div>
+    </div>
+
+    <div className="set-indicators set-indicators-right">
+      {gameState.gameType === "casual" ? (
+        (() => {
+          const servesRemaining = SERVES_PER_TURN - (gameState.servesInCurrentTurn ?? 0)
+          const rightIsServing = gameState.servingTeam === (gameState.sidesSwapped ? 1 : 2)
+          return rightIsServing
+            ? [1, 2, 3, 4].map((n) => (
+                <div
+                  key={n}
+                  className={`set-indicator ${
+                    n <= servesRemaining
+                      ? (gameState.sidesSwapped ? "set-indicator-won-team1" : "set-indicator-won-team2")
+                      : "set-indicator-not-won"
+                  }`}
+                />
+              ))
+            : [1, 2, 3, 4].map((n) => <div key={n} className="set-indicator set-indicator-not-won" />)
+        })()
+      ) : (
+        <>
+          <div
+            className={`set-indicator ${
+              teamPositions.rightSets >= 1
+                ? (gameState.sidesSwapped ? "set-indicator-won-team1" : "set-indicator-won-team2")
+                : "set-indicator-not-won"
+            }`}
+          />
+          {gameState.gameType !== "casual" && (
+            <div
+              className={`set-indicator ${
+                teamPositions.rightSets >= 2
+                  ? (gameState.sidesSwapped ? "set-indicator-won-team1" : "set-indicator-won-team2")
+                  : "set-indicator-not-won"
+              }`}
+            />
+          )}
+        </>
+      )}
+    </div>
+  </div>
+</div>
+
+
+{gameState.gameType !== "casual" && (
+  <div className="game-score">
+    <div>
+      {teamPositions.leftGames} - {teamPositions.rightGames}
+    </div>
+  </div>
+)}
+
 
             <div className={`change-ends-message ${showSwapMessage ? "active" : ""}`}>
               <div className="change-ends-icon-bg" />
