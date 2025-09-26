@@ -29,7 +29,7 @@ function useFlicWS() {
         } catch {}
       };
       ws.onclose = () => { 
-        console.log('WS disconnected, retrying...');
+        // console.log('WS disconnected, retrying..'); // Comment out for now
         retry = setTimeout(connect, 1000); 
       };
       ws.onerror  = () => { try { ws?.close(); } catch {} };
@@ -94,6 +94,11 @@ totalServesPlayed: number
 americanoTeam1Points: number
 americanoTeam2Points: number
 
+  // V2 Custom Configuration
+  customSets?: number // 1, 3, or 5
+ customTiebreak?: 'tie-break' | 'play-on'
+  customPointMode?: 'traditional' | 'silver' | 'golden'
+
 
   // Set history for final display
   setHistory: Array<{
@@ -112,6 +117,18 @@ americanoTeam2Points: number
 }
 
 export default function PadelScoring() {
+  const useV2Setup = process.env.NEXT_PUBLIC_V2_SETUP === 'true'
+  const [v2CurrentSelection, setV2CurrentSelection] = useState('casual')
+  const [v2Step, setV2Step] = useState<'mode' | 'gametype' | 'custom' | 'summary'>('gametype')
+  const [v2GameTypeSelection, setV2GameTypeSelection] = useState('standard')
+  const [v2CustomStep, setV2CustomStep] = useState<'point-mode' | 'sets' | 'tiebreak'>('point-mode')
+  const [longHoldTimer, setLongHoldTimer] = useState<NodeJS.Timeout | null>(null)
+  const [longHoldStartTime, setLongHoldStartTime] = useState<number>(0)
+  const [v2CustomConfig, setV2CustomConfig] = useState({
+    pointMode: 'traditional',
+    sets: 1,
+    tiebreak: 'tie-break'
+  })
   useFlicWS(); // Add this line
   const [gameState, setGameState] = useState<GameState>({
     team1Score: "0",
@@ -147,6 +164,10 @@ americanoTeam2Points: 0,
     setHistory: [],
     shouldSwapSides: false,
     swapSidesTimerActive: false,
+     // V2 Custom Configuration defaults
+  customSets: 2, // Default for V1 compatibility
+  customTiebreak: 'tie-break',
+  customPointMode: 'traditional',
   })
 
   // Game state history for undo
@@ -317,6 +338,7 @@ useEffect(() => () => cancelSwapTimer(), [cancelSwapTimer])
 
   const getPointSituation = useCallback(
     (state: GameState): { type: "set" | "match" | "tiebreak" | null; team: number | null } => {
+      console.log('getPointSituation called with games:', state.team1Games, '-', state.team2Games)
       if (!state.gameStarted || state.matchWinner) return { type: null, team: null }
 
       // Americano mode doesn't use tennis point situations
@@ -333,6 +355,24 @@ if (state.gameType === "casual") return { type: null, team: null }
 
         if (setPointTeam) {
           if (state.gameType === "casual") return { type: "match", team: setPointTeam }
+          
+          // In a 1-set game, set point = match point
+          const setsToWin = state.customSets || 2
+          console.log('Point situation debug:', {
+            setPointTeam,
+            setsToWin,
+            customSets: state.customSets,
+            gameType: state.gameType,
+            team1Sets: state.team1Sets,
+            team2Sets: state.team2Sets
+          })
+          
+          if (setsToWin === 1) {
+            console.log('Should show MATCH POINT for 1-set game')
+            return { type: "match", team: setPointTeam }
+          }
+          
+          // In multi-set games, check if this would win the match
           if ((setPointTeam === 1 && state.team1Sets >= 1) || (setPointTeam === 2 && state.team2Sets >= 1)) {
             return { type: "match", team: setPointTeam }
           }
@@ -363,53 +403,95 @@ if (state.gameType === "casual") return { type: null, team: null }
                   ? 1
                   : 0
 
-        let setPointTeam = null
+                    // ADD THIS DEBUG BLOCK HERE
+  console.log('=== Point Situation Debug ===')
+  console.log('Games:', state.team1Games, '-', state.team2Games)
+  console.log('Point scores:', team1NumScore, '-', team2NumScore)
+  console.log('customTiebreak:', state.customTiebreak)
+  console.log('customSets:', state.customSets)
+  console.log('gameType:', state.gameType)
 
-        if (state.gameType === "golden-point") {
-          // Only ever show SET POINT if a single point can win the GAME *and* the SET.
-        
-          // 1) Are we one game away from the set?
-          const nearSetFor1 = (state.team1Games === 5 && state.team2Games <= 4) || (state.team1Games === 6 && state.team2Games === 5)
-          const nearSetFor2 = (state.team2Games === 5 && state.team1Games <= 4) || (state.team2Games === 6 && state.team1Games === 5)
-        
-          // 2) Would THIS point win the game?
-          // Silver Point: after the first deuce, any deuce point (40-40) is a one-ball decider.
-          const silverDeciderNow = state.deuceCount >= 1 && team1NumScore === 3 && team2NumScore === 3
-        
-          // Otherwise, we’re in normal advantage: a side wins the game on this point
-          // only if they’re already ahead at 40/ADV.
-          const thisPointWinsGameFor1 = silverDeciderNow || (team1NumScore >= 3 && team1NumScore > team2NumScore)
-          const thisPointWinsGameFor2 = silverDeciderNow || (team2NumScore >= 3 && team2NumScore > team1NumScore)
-        
-          // 3) Set the SET POINT indicator only when both conditions are true.
-          if (nearSetFor1 && thisPointWinsGameFor1) {
-            setPointTeam = 1
-          } else if (nearSetFor2 && thisPointWinsGameFor2) {
-            setPointTeam = 2
-          }
-        
-        
-        } else {
-          if (
-            team1NumScore >= 3 &&
-            team1NumScore > team2NumScore &&
-            ((state.team1Games === 5 && state.team2Games <= 4) || (state.team1Games === 6 && state.team2Games === 5))
-          ) {
-            setPointTeam = 1
-          } else if (
-            team2NumScore >= 3 &&
-            team2NumScore > team1NumScore &&
-            ((state.team2Games === 5 && state.team1Games <= 4) || (state.team2Games === 6 && state.team1Games === 5))
-          ) {
-            setPointTeam = 2
-          }
+  if (team1NumScore >= 3 && team1NumScore > team2NumScore) {
+    console.log('Team 1 has winning point, checking conditions:')
+    console.log('- Play-on condition:', state.customTiebreak === 'play-on' && state.team1Games >= 6 && state.team1Games - state.team2Games === 1)
+    console.log('- customTiebreak is play-on:', state.customTiebreak === 'play-on')
+    console.log('- games >= 6:', state.team1Games >= 6)
+    console.log('- leading by 1:', state.team1Games - state.team2Games === 1)
+  }
+
+  let setPointTeam: number | null = null
+
+  // FIRST: Check for play-on mode (works with any point mode)
+  if (state.customTiebreak === 'play-on') {
+    if (team1NumScore >= 3 && team1NumScore > team2NumScore && state.team1Games >= 6 && state.team1Games - state.team2Games === 1) {
+      console.log('🎾 PLAY-ON SET POINT DETECTED FOR TEAM 1!')
+      setPointTeam = 1
+    } else if (team2NumScore >= 3 && team2NumScore > team1NumScore && state.team2Games >= 6 && state.team2Games - state.team1Games === 1) {
+      console.log('🎾 PLAY-ON SET POINT DETECTED FOR TEAM 2!')
+      setPointTeam = 2
+    }
+  }
+  
+  // SECOND: If not play-on mode, check standard set point conditions by point mode
+  if (!setPointTeam) {
+    if (state.gameType === "golden-point" || state.gameType === "silver-point") {
+      // Only ever show SET POINT if a single point can win the GAME *and* the SET.
+      const nearSetFor1 = (state.team1Games === 5 && state.team2Games <= 4) || (state.team1Games === 6 && state.team2Games === 5)
+      const nearSetFor2 = (state.team2Games === 5 && state.team1Games <= 4) || (state.team2Games === 6 && state.team1Games === 5)
+  
+      let thisPointWinsGameFor1 = false
+      let thisPointWinsGameFor2 = false
+  
+      if (state.gameType === "golden-point") {
+        const goldenDeciderNow = team1NumScore === 3 && team2NumScore === 3
+        thisPointWinsGameFor1 = goldenDeciderNow || (team1NumScore >= 3 && team1NumScore > team2NumScore)
+        thisPointWinsGameFor2 = goldenDeciderNow || (team2NumScore >= 3 && team2NumScore > team1NumScore)
+      } else {
+        // silver-point
+        const silverDeciderNow = state.deuceCount >= 1 && team1NumScore === 3 && team2NumScore === 3
+        thisPointWinsGameFor1 = silverDeciderNow || (team1NumScore >= 3 && team1NumScore > team2NumScore)
+        thisPointWinsGameFor2 = silverDeciderNow || (team2NumScore >= 3 && team2NumScore > team1NumScore)
+      }
+  
+      if (nearSetFor1 && thisPointWinsGameFor1) setPointTeam = 1
+      else if (nearSetFor2 && thisPointWinsGameFor2) setPointTeam = 2
+  
+    } else {
+      // Traditional + tie-break-at-6–6 mode
+      if (team1NumScore >= 3 && team1NumScore > team2NumScore) {
+        if (state.team1Games === 5 && state.team2Games <= 4) {
+          setPointTeam = 1
+        } else if ((state.customTiebreak === 'tie-break' || !state.customTiebreak) && state.team1Games === 6 && state.team2Games === 5) {
+          setPointTeam = 1
         }
+      } else if (team2NumScore >= 3 && team2NumScore > team1NumScore) {
+        if (state.team2Games === 5 && state.team1Games <= 4) {
+          setPointTeam = 2
+        } else if ((state.customTiebreak === 'tie-break' || !state.customTiebreak) && state.team2Games === 6 && state.team1Games === 5) {
+          setPointTeam = 2
+        }
+      }
+    }
+  }
+  
 
         if (setPointTeam) {
           if (state.gameType === "casual") return { type: "match", team: setPointTeam }
-          if ((setPointTeam === 1 && state.team1Sets >= 1) || (setPointTeam === 2 && state.team2Sets >= 1)) {
+          
+          const setsToWin = state.customSets || 2
+          
+          // In 1-set matches, any set point is a match point
+          if (setsToWin === 1) {
             return { type: "match", team: setPointTeam }
           }
+          
+          // In 3-set matches, check if winning this set wins the match
+          if (setsToWin === 3) {
+            if ((setPointTeam === 1 && state.team1Sets >= 1) || (setPointTeam === 2 && state.team2Sets >= 1)) {
+              return { type: "match", team: setPointTeam }
+            }
+          }
+          
           return { type: "set", team: setPointTeam }
         }
       }
@@ -481,6 +563,8 @@ if (state.gameType === "casual") return { type: null, team: null }
           newState.team1Score = tieBreakScore1.toString()
           newState.team2Score = tieBreakScore2.toString()
           newState.pointsPlayedInTieBreak++
+          console.log('Tiebreak points played:', newState.pointsPlayedInTieBreak)
+console.log('Should swap sides?', checkSideSwap(newState))
           
           // Tiebreak serving: first point only, then every 2 points
           if (newState.pointsPlayedInTieBreak === 1 || 
@@ -488,63 +572,90 @@ if (state.gameType === "casual") return { type: null, team: null }
             newState.servingTeam = newState.servingTeam === 1 ? 2 : 1
           }
 
-          // Check for tiebreak winner
-          if ((tieBreakScore1 >= 7 || tieBreakScore2 >= 7) && Math.abs(tieBreakScore1 - tieBreakScore2) >= 2) {
-            const winningTeam = tieBreakScore1 > tieBreakScore2 ? 1 : 2
+         // Check for tiebreak winner
+if ((tieBreakScore1 >= 7 || tieBreakScore2 >= 7) && Math.abs(tieBreakScore1 - tieBreakScore2) >= 2) {
+  const winningTeam = tieBreakScore1 > tieBreakScore2 ? 1 : 2
 
-            if (tieBreakScore1 > tieBreakScore2) {
-              newState.team1Sets++
-            } else {
-              newState.team2Sets++
-            }
+  if (tieBreakScore1 > tieBreakScore2) {
+    newState.team1Sets++
+  } else {
+    newState.team2Sets++
+  }
 
-            const currentSetNumber = newState.team1Sets + newState.team2Sets
+  const currentSetNumber = newState.team1Sets + newState.team2Sets
 
-            newState.setHistory.push({
-              set: currentSetNumber,
-              team1Games: tieBreakScore1 > tieBreakScore2 ? 7 : 6,
-              team2Games: tieBreakScore1 > tieBreakScore2 ? 6 : 7,
-              team1TiebreakScore: tieBreakScore1,
-              team2TiebreakScore: tieBreakScore2,
-              winner: winningTeam === 1 ? "team1" : "team2",
-              duration: Math.floor((Date.now() - newState.matchStartTime) / 1000),
-            })
+  newState.setHistory.push({
+    set: currentSetNumber,
+    team1Games: tieBreakScore1 > tieBreakScore2 ? 7 : 6,
+    team2Games: tieBreakScore1 > tieBreakScore2 ? 6 : 7,
+    team1TiebreakScore: tieBreakScore1,
+    team2TiebreakScore: tieBreakScore2,
+    winner: winningTeam === 1 ? "team1" : "team2",
+    duration: Math.floor((Date.now() - newState.matchStartTime) / 1000),
+  })
 
-            // Reset for next set
-            newState.team1Games = 0
-            newState.team2Games = 0
-            newState.team1Score = "0"
-            newState.team2Score = "0"
-            newState.inTieBreak = false
-            newState.pointsPlayedInTieBreak = 0
-            newState.servingTeam = newState.servingTeam === 1 ? 2 : 1
+  // Reset for next set
+  newState.team1Games = 0
+  newState.team2Games = 0
+  newState.team1Score = "0"
+  newState.team2Score = "0"
+  newState.inTieBreak = false
+  newState.pointsPlayedInTieBreak = 0
+  newState.servingTeam = newState.servingTeam === 1 ? 2 : 1
 
-            // Check for match winner
-            const setsNeededToWin = newState.gameType === "casual" ? 1 : 2
-            if (newState.team1Sets >= setsNeededToWin) {
-              newState.matchWinner = 1
-              console.log("Match won by team 1") // Debug log
-              setShowStatsSlideshow(true)
-            } else if (newState.team2Sets >= setsNeededToWin) {
-              newState.matchWinner = 2
-              console.log("Match won by team 2") // Debug log
-              setShowStatsSlideshow(true)
-            }
+  // Check for match winner
+  const setsNeededToWin = newState.gameType === "casual" ? 1 : (newState.customSets || 2)
+  console.log('Sets needed to win:', setsNeededToWin, 'from customSets:', newState.customSets, 'gameType:', newState.gameType)
+  if (newState.team1Sets >= setsNeededToWin) {
+    newState.matchWinner = 1
+    console.log("Match won by team 1")
+    setShowStatsSlideshow(true)
+  } else if (newState.team2Sets >= setsNeededToWin) {
+    newState.matchWinner = 2
+    console.log("Match won by team 2")
+    setShowStatsSlideshow(true)
+  }
 
-            if (!newState.matchWinner) {
-              const tieBreakScore = `${tieBreakScore1 > tieBreakScore2 ? "7-6" : "6-7"} (${tieBreakScore1}-${tieBreakScore2})`
-              console.log('Complete tiebreak score string:', tieBreakScore);
+  if (!newState.matchWinner) {
+    const tieBreakScore = `${tieBreakScore1 > tieBreakScore2 ? "7-6" : "6-7"} (${tieBreakScore1}-${tieBreakScore2})`
+    console.log('Complete tiebreak score string:', tieBreakScore);
 
-              setSetWinData({
-                team: winningTeam,
-                setNumber: currentSetNumber,
-                gamesScore: tieBreakScore,
-              })
-              setShowSetWin(true)
-            }
+    setSetWinData({
+      team: winningTeam,
+      setNumber: currentSetNumber,
+      gamesScore: tieBreakScore,
+    })
+    setShowSetWin(true)
+  }
 
-            return newState
-          }
+  return newState
+}
+
+// Add tiebreak side swap check here (BEFORE the closing brace of the tiebreak section)
+// Check for side swap in tiebreak
+if (!newState.matchWinner && checkSideSwap(newState)) {
+  newState.shouldSwapSides = true
+  newState.swapSidesTimerActive = true
+
+  setShowSwapMessage(true)
+  setSwapAnimationActive(true)
+
+  startSwapTimer(SWAP_MSG_MS, () => {
+    setGameState((current) => {
+      if (current.swapSidesTimerActive && current.shouldSwapSides) {
+        return {
+          ...current,
+          sidesSwapped: !current.sidesSwapped,
+          shouldSwapSides: false,
+          swapSidesTimerActive: false,
+        }
+      }
+      return current
+    })
+    setShowSwapMessage(false)
+    setSwapAnimationActive(false)
+  })
+}
         } else {
           // --- AMERICANO: simple points + serve rotation + timed side-swap ---
           if (prev.gameType === "casual") {
@@ -632,18 +743,28 @@ if (state.gameType === "casual") return { type: null, team: null }
           const prevT2 = toNum(prev.team2Score)
           const wasDeuceBeforePoint = prevT1 === 3 && prevT2 === 3
           
-          // Silver Point: second+ deuce becomes golden point
-          const silverGoldenOnThisPoint = 
-            prev.gameType === "golden-point" && wasDeuceBeforePoint && prev.deuceCount >= 1
+        // Silver Point: second+ deuce becomes golden point
+const silverGoldenOnThisPoint = 
+prev.gameType === "silver-point" && wasDeuceBeforePoint && prev.deuceCount >= 1
           
-          // Mark first time reaching deuce
-          const firstTimeAtDeuce = 
-            prev.gameType === "golden-point" && wasDeuceBeforePoint && prev.deuceCount === 0
+        // Mark first time reaching deuce
+const firstTimeAtDeuce = 
+prev.gameType === "silver-point" && wasDeuceBeforePoint && prev.deuceCount === 0
           if (firstTimeAtDeuce) {
             newState.deuceCount = 1
           }
           
           if (prev.gameType === "golden-point") {
+            // True Golden Point: immediate sudden death at deuce (40-40)
+            const wasAtDeuce = toNum(prev.team1Score) === 3 && toNum(prev.team2Score) === 3
+            
+            if (wasAtDeuce) {
+              gameWon = true  // Point scored from deuce wins the game
+            } else if ((team1NumScore >= 4 || team2NumScore >= 4) && Math.abs(team1NumScore - team2NumScore) >= 2) {
+              gameWon = true  // Normal win before reaching deuce
+            }
+          } else if (prev.gameType === "silver-point") {
+            // Silver Point: advantage once, then sudden death
             if (silverGoldenOnThisPoint) {
               // Second+ deuce: THIS point decides the game
               gameWon = true
@@ -666,7 +787,7 @@ if (state.gameType === "casual") return { type: null, team: null }
               }
             }
           } else {
-            // Standard mode unchanged (win-by-two)
+            // Traditional mode (win-by-two)
             if (team1NumScore >= 4 && team2NumScore >= 4) {
               if (Math.abs(team1NumScore - team2NumScore) >= 2) {
                 gameWon = true
@@ -744,10 +865,15 @@ if (state.gameType === "casual") return { type: null, team: null }
                 newState.team2Sets++
                 setWon = true
               } else if (newState.team1Games === 6 && newState.team2Games === 6) {
-                newState.inTieBreak = true
-                newState.team1Score = "0"
-                newState.team2Score = "0"
-                newState.pointsPlayedInTieBreak = 0
+                // Check tie-break configuration
+                if (newState.customTiebreak === 'tie-break' || !newState.customTiebreak) {
+                  // Go to tie-break at 6-6 (default behavior)
+                  newState.inTieBreak = true
+                  newState.team1Score = "0"
+                  newState.team2Score = "0"
+                  newState.pointsPlayedInTieBreak = 0
+                }
+                // If 'play-on', continue playing games normally (no tie-break)
               }
             }
 
@@ -765,7 +891,8 @@ if (state.gameType === "casual") return { type: null, team: null }
               newState.team1Games = 0
               newState.team2Games = 0
 
-              const setsNeededToWin = newState.gameType === "casual" ? 1 : 2
+              const setsNeededToWin = newState.gameType === "casual" ? 1 : (newState.customSets || 2)
+console.log('Regular set win - Sets needed:', setsNeededToWin, 'from customSets:', newState.customSets, 'gameType:', newState.gameType)
               if (newState.team1Sets >= setsNeededToWin) {
                 newState.matchWinner = 1
                 console.log("Match won by team 1") // Debug log
@@ -893,33 +1020,33 @@ return newState
 
   const startGame = useCallback(() => {
     if (gameState.gameStarted) return
-
+  
     registerActivity()
     setShowCoinToss(true)
     setServerSelectionPhase(1)
-
+  
     const servingTeam = Math.random() < 0.5 ? 1 : 2
     setCoinTossResult(servingTeam)
-
+  
     setTimeout(() => {
       setServerSelectionPhase(2)
     }, 3000)
   }, [gameState.gameStarted, registerActivity])
-
+  
   const resetGame = useCallback(() => {
     registerActivity()
-
-  // Clear all timers
-cancelSwapTimer()
-
+  
+    // Clear all timers
+    cancelSwapTimer()
+  
     if (autoSlideTimerRef.current) {
       clearTimeout(autoSlideTimerRef.current)
       autoSlideTimerRef.current = null
     }
-
+  
     setSwapAnimationActive(false)
     setShowConfetti(false)
-
+  
     setGameState({
       team1Score: "0",
       team2Score: "0",
@@ -947,13 +1074,10 @@ cancelSwapTimer()
       currentStreak: { team: 0, streak: 0 },
       pointsPlayedInTieBreak: 0,
       deuceCount: 0,
-
-      // Americano
-    servesInCurrentTurn: 0,
-    totalServesPlayed: 0,
-    americanoTeam1Points: 0,
-    americanoTeam2Points: 0,
-
+      servesInCurrentTurn: 0,
+      totalServesPlayed: 0,
+      americanoTeam1Points: 0,
+      americanoTeam2Points: 0,
       setHistory: [],
       shouldSwapSides: false,
       swapSidesTimerActive: false,
@@ -968,13 +1092,20 @@ cancelSwapTimer()
     setShowStatsSlideshow(false)
     setCurrentStatsSlide(0)
     setManualNavigation(false)
-  }, [registerActivity])
+  
+    // V2 Reset Logic: Return to game type selection instead of mode selection
+    if (useV2Setup) {
+      setV2Step('gametype') // Go back to Standard/Custom choice
+      setV2GameTypeSelection('standard') // Reset to default selection
+      // Keep v2CurrentSelection and custom config - don't reset user's choices
+    }
+  }, [registerActivity, useV2Setup, cancelSwapTimer])
 
   const navigateSlide = useCallback(
     (direction: "next" | "prev") => {
       registerActivity()
       setManualNavigation(true)
-
+  
       if (direction === "next") {
         setCurrentStatsSlide((prev) => (prev >= 3 ? 0 : prev + 1))
       } else {
@@ -983,7 +1114,7 @@ cancelSwapTimer()
     },
     [registerActivity],
   )
-
+  
   // Effects for auto-cycling slides
   useEffect(() => {
     if (!showStatsSlideshow || manualNavigation) {
@@ -993,13 +1124,13 @@ cancelSwapTimer()
       }
       return
     }
-
+  
     const timer = setTimeout(() => {
       setCurrentStatsSlide((prev) => (prev >= 3 ? 0 : prev + 1))
     }, 15000)
-
+  
     autoSlideTimerRef.current = timer
-
+  
     return () => {
       if (timer) {
         clearTimeout(timer)
@@ -1015,6 +1146,69 @@ cancelSwapTimer()
       return () => clearTimeout(resetTimer)
     }
   }, [manualNavigation])
+
+  // Auto-start timer for server selection screen
+useEffect(() => {
+  if (showCoinToss && serverSelectionPhase === 2 && coinTossResult) {
+    const autoStartTimer = setTimeout(() => {
+      // Same logic as current button press - start the game
+      cancelSwapTimer()
+      setGameState((prev) => {
+        const base = {
+          ...prev,
+          gameStarted: true,
+          gameType: prev.selectedGameType,
+          team1Score: "0",
+          team2Score: "0",
+          team1Games: 0,
+          team2Games: 0,
+          team1Sets: 0,
+          team2Sets: 0,
+          inTieBreak: false,
+          matchWinner: null,
+          servingTeam: coinTossResult,
+          sidesSwapped: false,
+          shouldSwapSides: false,
+          swapSidesTimerActive: false,
+          pointsPlayedInTieBreak: 0,
+          matchStartTime: Date.now(),
+        }
+        
+        if (prev.selectedGameType === "casual") {
+          return {
+            ...base,
+            servesInCurrentTurn: 0,
+            totalServesPlayed: 0,
+            americanoTeam1Points: 0,
+            americanoTeam2Points: 0,
+          }
+        }
+        
+        return base
+      })
+      setGameStateHistory([])
+      setShowCoinToss(false)
+      setCoinTossResult(null)
+      setServerSelectionPhase(1)
+    }, 8000) // 8 seconds auto-start
+
+    return () => clearTimeout(autoStartTimer)
+  }
+}, [showCoinToss, serverSelectionPhase, coinTossResult, cancelSwapTimer])
+  
+  // Long-hold keyup handler
+  useEffect(() => {
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (useV2Setup && e.key.toLowerCase() === 'l' && longHoldTimer) { // Change to 'r' for court
+        clearTimeout(longHoldTimer)
+        setLongHoldTimer(null)
+        setLongHoldStartTime(0)
+      }
+    }
+  
+    window.addEventListener("keyup", handleKeyUp)
+    return () => window.removeEventListener("keyup", handleKeyUp)
+  }, [useV2Setup, longHoldTimer])
 
   // Screensaver effects
   useEffect(() => {
@@ -1135,6 +1329,7 @@ cancelSwapTimer()
 // Keyboard event handler
 useEffect(() => {
   const handleKeyPress = (e: KeyboardEvent) => {
+    console.log('Key detected:', e.key, 'timestamp:', Date.now())
     registerActivity()
 
     if (["q", "p", "a", "l", " ", "Enter", "r", "k"].includes(e.key.toLowerCase()) || e.key === " ") {
@@ -1143,17 +1338,127 @@ useEffect(() => {
 
     const key = e.key.toLowerCase();
 
-    // Single key behavior: start if pre-game, otherwise reset
-    if (key === 'r') {
-      if (!gameState.gameStarted && !showCoinToss) {
-        // Game Select screen - start with selected type
-        startGame();
-      } else {
-        // In-game, stats slideshow, or anywhere else - reset
-        resetGame();
-      }
-      return;
+// V2 Setup Navigation
+if (useV2Setup && !gameState.gameStarted && !showCoinToss) {
+  
+  // Long-hold detection for mode selection override (L key for testing, R key on court)
+  if (key === 'l') {  // Change to 'r' for court deployment
+    if (longHoldStartTime === 0) {
+      const startTime = Date.now()
+      setLongHoldStartTime(startTime)
+      
+      const timer = setTimeout(() => {
+        // 6-second hold: Show mode selection override
+        setV2Step('mode')
+        setLongHoldStartTime(0)
+        setLongHoldTimer(null)
+      }, 6000)
+      setLongHoldTimer(timer)
     }
+    return
+  }
+  
+  if (key === 'q' || key === 'p') {
+    if (v2Step === 'mode') {
+      setV2CurrentSelection(prev => prev === 'casual' ? 'tournament' : 'casual')
+    } else if (v2Step === 'gametype') {
+      setV2GameTypeSelection(prev => prev === 'standard' ? 'custom' : 'standard')
+    
+    } else if (v2Step === 'custom') {
+      if (v2CustomStep === 'point-mode') {
+        setV2CustomConfig(prev => ({
+          ...prev,
+          pointMode: prev.pointMode === 'traditional' ? 'silver' : prev.pointMode === 'silver' ? 'golden' : 'traditional'
+        }))
+      } else if (v2CustomStep === 'sets') {
+        setV2CustomConfig(prev => ({
+          ...prev,
+          sets: prev.sets === 1 ? 3 : 1
+        }))
+      } else if (v2CustomStep === 'tiebreak') {
+        setV2CustomConfig(prev => ({
+          ...prev,
+          tiebreak: prev.tiebreak === 'tie-break' ? 'play-on' : 'tie-break'
+        }))
+      }
+    }
+    registerActivity()
+    return
+  } else if (key === 'r') {
+    if (v2Step === 'mode') {
+      if (v2CurrentSelection === 'casual') {
+        setV2Step('gametype')
+      } else {
+        alert('Tournament Mode - Coming Soon')
+        setV2CurrentSelection('casual')
+      }
+    } else if (v2Step === 'gametype') {
+      if (v2GameTypeSelection === 'standard') {
+        // Standard: Start game with quick play defaults (1 set, advantage, tie-break)
+        setGameState(prev => ({ 
+          ...prev, 
+          selectedGameType: 'traditional',
+          customSets: 1,
+          customTiebreak: 'tie-break',
+          customPointMode: 'traditional'
+        }))
+        setV2Step('mode')
+        setV2CurrentSelection('quickstart')
+        setV2GameTypeSelection('standard')
+        startGame()
+      } else {
+        // Custom: Go to configuration screens
+        setV2Step('custom')
+        setV2CustomStep('point-mode')
+      }
+    } else if (v2Step === 'custom') {
+      if (v2CustomStep === 'point-mode') {
+        setV2CustomStep('sets')
+      } else if (v2CustomStep === 'sets') {
+        setV2CustomStep('tiebreak')
+      } else if (v2CustomStep === 'tiebreak') {
+        setV2Step('summary')
+      }
+    } else if (v2Step === 'summary') {
+      // Hold R on summary: Start game with current settings
+      const gameTypeFromConfig = v2CustomConfig.pointMode === 'golden' ? 'golden-point' : 
+                                v2CustomConfig.pointMode === 'silver' ? 'silver-point' : 'traditional'
+      
+     
+      
+      setGameState(prev => ({ 
+        ...prev, 
+        selectedGameType: gameTypeFromConfig,
+        customSets: v2CustomConfig.sets,
+        customTiebreak: v2CustomConfig.tiebreak,
+        customPointMode: v2CustomConfig.pointMode
+      }))
+      setV2Step('mode')
+      setV2CurrentSelection('quickstart')
+      setV2GameTypeSelection('standard')
+      startGame()
+    }
+    registerActivity()
+    return
+  }
+}
+// V1 behavior when V2 is disabled
+if (!gameState.gameStarted && !showCoinToss) {
+  if (key === 'r') {
+    startGame()
+    return
+  }
+  if (key === 'q' || key === 'p') {
+    switchGameType()
+    return
+  }
+}
+
+// In-game reset behavior
+if (key === 'r') {
+  resetGame()
+  return
+}
 
     if (!gameState.gameStarted && !showCoinToss) {
       if (e.key.toLowerCase() === "q" || e.key.toLowerCase() === "p") {
@@ -1237,6 +1542,12 @@ useEffect(() => {
   serverSelectionPhase,
   coinTossResult,
   showCoinToss,
+  useV2Setup,
+  v2Step,
+  v2CurrentSelection,
+  v2GameTypeSelection,
+  v2CustomConfig,
+  v2CustomStep,
 ])
 
   // Activity detection with throttling
@@ -1334,7 +1645,7 @@ useEffect(() => {
             pointerEvents: "none",
           }}
         >
-          <ConfettiExplosion
+<ConfettiExplosion
             force={0.8}
             duration={3000}
             particleCount={150}
@@ -1351,8 +1662,365 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Screen rendering */}
-      {showScreensaver ? (
+ {/* Screen rendering */}
+{useV2Setup && !gameState.gameStarted && !showCoinToss && !showScreensaver ? (
+  <div className="screen-wrapper">
+    <div className="v2-setup-screen">
+      {v2Step === 'mode' && (
+        <>
+          <div className="setup-title">SELECT MODE</div>
+         
+          <div className="setup-options">
+            <div className={`setup-option ${v2CurrentSelection === 'casual' ? 'selected' : ''}`}>
+            <div className="setup-option-name">CASUAL</div>
+            <div className="setup-option-description">Standard game setup</div>
+            </div>
+            <div className={`setup-option ${v2CurrentSelection === 'tournament' ? 'selected' : ''}`}>
+              <div className="setup-option-name">TOURNAMENT MODE</div>
+              <div className="setup-option-description">Staff access (coming soon)</div>
+            </div>
+          </div>
+          <div className="setup-instructions">PRESS TO SWITCH • HOLD TO SELECT</div>
+        </>
+      )}
+
+{v2Step === 'gametype' && (
+  <>
+    <div className="minimal-container">
+      <div className="minimal-game-selection">
+        <div className={`minimal-option ${v2GameTypeSelection === 'standard' ? 'selected' : ''}`}>
+          <div className="minimal-option-text">QUICK<br></br>PLAY</div>
+        </div>
+        <div className={`minimal-option ${v2GameTypeSelection === 'custom' ? 'selected' : ''}`}>
+          <div className="minimal-option-text">CUSTOM<br></br>GAME</div>
+        </div>
+      </div>
+    </div>
+  </>
+)}
+      
+      {v2Step === 'custom' && (
+  <>
+  {v2CustomStep === 'point-mode' && (
+  <>
+    <div className="minimal-container">
+      <div className="minimal-game-selection-horizontal">
+        <div className={`minimal-option-horizontal ${v2CustomConfig.pointMode === 'traditional' ? 'selected' : ''}`}>
+          <div className="minimal-option-text">ADVANTAGE</div>
+        </div>
+        <div className={`minimal-option-horizontal ${v2CustomConfig.pointMode === 'silver' ? 'selected' : ''}`}>
+          <div className="minimal-option-text">SILVER POINT</div>
+        </div>
+        <div className={`minimal-option-horizontal ${v2CustomConfig.pointMode === 'golden' ? 'selected' : ''}`}>
+          <div className="minimal-option-text">GOLDEN POINT</div>
+        </div>
+      </div>
+    </div>
+  </>
+)}
+    
+    {v2CustomStep === 'sets' && (
+  <>
+    <div className="minimal-container">
+      <div className="minimal-game-selection">
+        <div className={`minimal-option ${v2CustomConfig.sets === 1 ? 'selected' : ''}`}>
+          <div className="minimal-number">1</div>
+          <div className="minimal-label">SET</div>
+        </div>
+        <div className={`minimal-option ${v2CustomConfig.sets === 3 ? 'selected' : ''}`}>
+          <div className="minimal-number">3</div>
+          <div className="minimal-label">SETS</div>
+        </div>
+      </div>
+    </div>
+  </>
+)}
+    
+    {v2CustomStep === 'tiebreak' && (
+      <>
+         <div className="minimal-container">
+      <div className="minimal-game-selection">
+        <div className={`minimal-option ${v2CustomConfig.tiebreak === 'tie-break' ? 'selected' : ''}`}>
+          <div className="minimal-option-text">TIE<br></br>BREAK</div>
+        </div>
+        <div className={`minimal-option ${v2CustomConfig.tiebreak === 'play-on' ? 'selected' : ''}`}>
+          <div className="minimal-option-text">PLAY<br></br>ON</div>
+        </div>
+      </div>
+    </div>
+      </>
+    )}
+  </>
+)}
+
+{v2Step === 'summary' && (
+  <>
+    <div className="summary-screen">
+      <div className="summary-content">
+        <div className="summary-line">
+          {v2CustomConfig.pointMode === 'traditional' ? 'ADVANTAGE' :
+            v2CustomConfig.pointMode === 'silver' ? 'SILVER POINT' : 'GOLDEN POINT'}
+        </div>
+        <div className="summary-line">
+          {v2CustomConfig.sets} {v2CustomConfig.sets === 1 ? 'SET' : 'SETS'}
+        </div>
+        <div className="summary-line">
+          {v2CustomConfig.tiebreak === 'tie-break' ? 'TIE BREAK' : 'PLAY ON'}
+        </div>
+        <div className="summary-action">HOLD TO START GAME</div>
+      </div>
+    </div>
+  </>
+)}
+</div>
+          <style jsx>{`
+        .v2-setup-screen {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background-color: #121212;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: 'Inter', system-ui, sans-serif;
+  padding: 0;
+  margin: 0;
+}
+
+.setup-title {
+  font-size: 3vw;
+  font-weight: 600;
+  margin-bottom: 7vw;
+  letter-spacing: 0.1em;
+}
+
+/* Full screen minimal game selection */
+/* Minimal container with border like other screens */
+.minimal-container {
+  position: absolute;
+  top: 0.5vw;
+  left: 0.5vw;
+  right: 0.5vw;
+  bottom: 0.5vw;
+  background-color: #121212;
+  overflow: hidden;
+}
+
+.minimal-game-selection {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  gap: 0;
+}
+
+.minimal-number {
+  font-size: 35vw;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: white;
+  text-align: center;
+  line-height: 0.8;
+  margin-bottom: 4vw;
+  transition: color 0.3s ease;
+}
+
+.minimal-label {
+  font-size: 4vw;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: white;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.minimal-option.selected .minimal-number,
+.minimal-option.selected .minimal-label {
+  color: #121212;
+}
+
+/* Update the minimal-option to use flex-column for number/label layout */
+.minimal-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #2A2A2A;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.minimal-game-selection-horizontal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  gap: 0;
+}
+
+.minimal-option-horizontal {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #2A2A2A;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.minimal-option-horizontal.selected {
+  background-color: #04CA95;
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+.minimal-option-horizontal .minimal-option-text {
+  font-size: 6vw;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: white;
+  text-align: center;
+  transition: color 0.3s ease;
+  transform: scale(1);
+}
+
+.minimal-option-horizontal.selected .minimal-option-text {
+  color: #121212;
+  transform: scale(1.005);
+}
+
+.minimal-option .minimal-option-text {
+  font-size: 7vw;
+  line-height: 1.2em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: white;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.minimal-option.selected .minimal-option-text {
+  color: #121212;
+  font-weight: 700; /* Lighter weight on green background */
+}
+
+/* Reset flex-direction for text-only options */
+.minimal-option:has(.minimal-option-text:only-child) {
+  flex-direction: row;
+}
+
+/* Or if :has() isn't supported, create a specific class */
+.minimal-option-text-only {
+  flex-direction: row;
+}
+
+.minimal-option.selected {
+  background-color: #04CA95;
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+.minimal-option-text {
+  font-size: 8vw;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: white;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.minimal-option.selected .minimal-option-text {
+  color: #121212;
+}
+
+/* Keep existing styles for other V2 screens unchanged */
+.setup-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2vw;
+  margin-bottom: 4vw;
+  min-width: 60vw;
+}
+
+.setup-option {
+  background-color: #1E1E1E;
+  border-radius: 0.8vw;
+  padding: 4vw;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.setup-option.selected {
+  background-color: #2A2A2A;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transform: scale(1.02);
+}
+
+.setup-option-name {
+  font-size: 2.3vw;
+  font-weight: 500;
+  margin-bottom: 1vw;
+  letter-spacing: 0.1em;
+}
+
+.setup-option-description {
+  font-size: 1.6vw;
+  color: #B3B3B3;
+}
+
+.setup-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2vw;
+  margin-bottom: 4vw;
+  min-width: 50vw;
+}
+.summary-screen {
+  position: absolute;
+  top: 0.5vw;
+  left: 0.5vw;
+  right: 0.5vw;
+  bottom: 0.5vw;
+  background-color: #121212;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4vw;
+}
+
+.summary-line {
+  font-size: 6vw;
+  font-weight: 600;
+  color: #B3B3B3;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.summary-action {
+  font-size: 3vw;
+  font-weight: 600;
+  color: #04CA95;
+  letter-spacing: 0.1em;
+  text-align: center;
+  margin-top: 6vw;
+}
+
+.setup-instructions {
+  font-size: 2vw;
+  color: #B3B3B3;
+  text-align: center;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+          `}</style>
+        </div>
+      ) : showScreensaver ? (
         <div className="screen-wrapper">
           <div className="screensaver">
             <div className="screensaver-image-container">
@@ -1501,7 +2169,7 @@ useEffect(() => {
                   />
                 </div>
                 <div className="game-type-name">SILVER</div>
-                <div className="game-type-description">Advantage first, then golden point</div>
+                <div className="game-type-description">Advantage first, then sudden death</div>
               </div>
 
               <div className={`game-type-option ${gameState.selectedGameType === "casual" ? "selected" : ""}`}>
@@ -3061,44 +3729,45 @@ font-size: 2.5vw;
     </div>
 
     <div className="set-indicators set-indicators-left">
-      {gameState.gameType === "casual" ? (
-        (() => {
-          const servesRemaining = SERVES_PER_TURN - (gameState.servesInCurrentTurn ?? 0)
-          const leftIsServing = gameState.servingTeam === (gameState.sidesSwapped ? 2 : 1)
-          return leftIsServing
-            ? [1, 2, 3, 4].map((n) => (
-                <div
-                  key={n}
-                  className={`set-indicator ${
-                    n <= servesRemaining
-                      ? (gameState.sidesSwapped ? "set-indicator-won-team2" : "set-indicator-won-team1")
-                      : "set-indicator-not-won"
-                  }`}
-                />
-              ))
-            : [1, 2, 3, 4].map((n) => <div key={n} className="set-indicator set-indicator-not-won" />)
-        })()
-      ) : (
-        <>
-          <div
-            className={`set-indicator ${
-              teamPositions.leftSets >= 1
-                ? (gameState.sidesSwapped ? "set-indicator-won-team2" : "set-indicator-won-team1")
-                : "set-indicator-not-won"
-            }`}
-          />
-          {gameState.gameType !== "casual" && (
+  {gameState.gameType === "casual" ? (
+    (() => {
+      const servesRemaining = SERVES_PER_TURN - (gameState.servesInCurrentTurn ?? 0)
+      const leftIsServing = gameState.servingTeam === (gameState.sidesSwapped ? 2 : 1)
+      return leftIsServing
+        ? [1, 2, 3, 4].map((n) => (
             <div
+              key={n}
               className={`set-indicator ${
-                teamPositions.leftSets >= 2
+                n <= servesRemaining
                   ? (gameState.sidesSwapped ? "set-indicator-won-team2" : "set-indicator-won-team1")
                   : "set-indicator-not-won"
               }`}
             />
-          )}
-        </>
-      )}
-    </div>
+          ))
+        : [1, 2, 3, 4].map((n) => <div key={n} className="set-indicator set-indicator-not-won" />)
+    })()
+  ) : (
+   // Dynamic set indicators based on customSets
+(() => {
+  const setsToWin = gameState.customSets || 2
+  // For "best of X", you need to win (X+1)/2 sets, but for simplicity:
+  // 1 set match = show 1 indicator
+  // 3 set match = show 2 indicators (need to win 2 out of 3)
+  const indicatorsToShow = setsToWin === 1 ? 1 : 2
+  
+  return Array.from({ length: indicatorsToShow }, (_, index) => (
+    <div
+      key={index}
+      className={`set-indicator ${
+        teamPositions.leftSets > index
+          ? (gameState.sidesSwapped ? "set-indicator-won-team2" : "set-indicator-won-team1")
+          : "set-indicator-not-won"
+      }`}
+    />
+  ))
+})()
+  )}
+</div>
   </div>
 
   <div className="team-column">
@@ -3117,44 +3786,42 @@ font-size: 2.5vw;
     </div>
 
     <div className="set-indicators set-indicators-right">
-      {gameState.gameType === "casual" ? (
-        (() => {
-          const servesRemaining = SERVES_PER_TURN - (gameState.servesInCurrentTurn ?? 0)
-          const rightIsServing = gameState.servingTeam === (gameState.sidesSwapped ? 1 : 2)
-          return rightIsServing
-            ? [1, 2, 3, 4].map((n) => (
-                <div
-                  key={n}
-                  className={`set-indicator ${
-                    n <= servesRemaining
-                      ? (gameState.sidesSwapped ? "set-indicator-won-team1" : "set-indicator-won-team2")
-                      : "set-indicator-not-won"
-                  }`}
-                />
-              ))
-            : [1, 2, 3, 4].map((n) => <div key={n} className="set-indicator set-indicator-not-won" />)
-        })()
-      ) : (
-        <>
-          <div
-            className={`set-indicator ${
-              teamPositions.rightSets >= 1
-                ? (gameState.sidesSwapped ? "set-indicator-won-team1" : "set-indicator-won-team2")
-                : "set-indicator-not-won"
-            }`}
-          />
-          {gameState.gameType !== "casual" && (
+  {gameState.gameType === "casual" ? (
+    (() => {
+      const servesRemaining = SERVES_PER_TURN - (gameState.servesInCurrentTurn ?? 0)
+      const rightIsServing = gameState.servingTeam === (gameState.sidesSwapped ? 1 : 2)
+      return rightIsServing
+        ? [1, 2, 3, 4].map((n) => (
             <div
+              key={n}
               className={`set-indicator ${
-                teamPositions.rightSets >= 2
+                n <= servesRemaining
                   ? (gameState.sidesSwapped ? "set-indicator-won-team1" : "set-indicator-won-team2")
                   : "set-indicator-not-won"
               }`}
             />
-          )}
-        </>
-      )}
-    </div>
+          ))
+        : [1, 2, 3, 4].map((n) => <div key={n} className="set-indicator set-indicator-not-won" />)
+    })()
+  ) : (
+  // Dynamic set indicators based on customSets
+(() => {
+  const setsToWin = gameState.customSets || 2
+  const indicatorsToShow = setsToWin === 1 ? 1 : 2
+  
+  return Array.from({ length: indicatorsToShow }, (_, index) => (
+    <div
+      key={index}
+      className={`set-indicator ${
+        teamPositions.rightSets > index
+          ? (gameState.sidesSwapped ? "set-indicator-won-team1" : "set-indicator-won-team2")
+          : "set-indicator-not-won"
+      }`}
+    />
+  ))
+})()
+  )}
+</div>
   </div>
 </div>
 
