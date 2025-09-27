@@ -1824,6 +1824,7 @@ if (key === 'r') {
   line-height: 0.8;
   margin-bottom: 4vw;
   transition: color 0.3s ease;
+  opacity: 55%;
 }
 
 .minimal-label {
@@ -1833,11 +1834,13 @@ if (key === 'r') {
   color: white;
   text-align: center;
   transition: color 0.3s ease;
+  opacity: 55%;
 }
 
 .minimal-option.selected .minimal-number,
 .minimal-option.selected .minimal-label {
   color: #121212;
+  opacity:100%
 }
 
 /* Update the minimal-option to use flex-column for number/label layout */
@@ -1880,6 +1883,7 @@ if (key === 'r') {
   font-weight: 700;
   letter-spacing: 0.1em;
   color: white;
+  opacity: 55%;
   text-align: center;
   transition: color 0.3s ease;
   transform: scale(1);
@@ -1888,6 +1892,7 @@ if (key === 'r') {
 .minimal-option-horizontal.selected .minimal-option-text {
   color: #121212;
   transform: scale(1.005);
+  opacity: 100%;
 }
 
 .minimal-option .minimal-option-text {
@@ -1895,6 +1900,7 @@ if (key === 'r') {
   line-height: 1.2em;
   font-weight: 600;
   letter-spacing: 0.1em;
+  opacity: 55%;
   color: white;
   text-align: center;
   transition: all 0.3s ease;
@@ -1903,6 +1909,7 @@ if (key === 'r') {
 .minimal-option.selected .minimal-option-text {
   color: #121212;
   font-weight: 700; /* Lighter weight on green background */
+  opacity: 100%;
 }
 
 /* Reset flex-direction for text-only options */
@@ -1991,13 +1998,13 @@ if (key === 'r') {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4vw;
+  gap: 2vw;
 }
 
 .summary-line {
   font-size: 6vw;
   font-weight: 600;
-  color: #B3B3B3;
+  color: #ffffff;
   letter-spacing: 0.1em;
   text-align: center;
 }
