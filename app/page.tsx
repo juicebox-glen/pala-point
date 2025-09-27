@@ -1199,7 +1199,7 @@ useEffect(() => {
   // Long-hold keyup handler
   useEffect(() => {
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (useV2Setup && e.key.toLowerCase() === 'r' && longHoldTimer) { // Change to 'r' for court
+      if (useV2Setup && e.key.toLowerCase() === 'l' && longHoldTimer) { // Change to 'r' for court
         clearTimeout(longHoldTimer)
         setLongHoldTimer(null)
         setLongHoldStartTime(0)
@@ -1342,7 +1342,7 @@ useEffect(() => {
 if (useV2Setup && !gameState.gameStarted && !showCoinToss) {
   
   // Long-hold detection for mode selection override (L key for testing, R key on court)
-  if (key === 'r') {  // Change to 'r' for court deployment
+  if (key === 'l') {  // Change to 'r' for court deployment
     if (longHoldStartTime === 0) {
       const startTime = Date.now()
       setLongHoldStartTime(startTime)
