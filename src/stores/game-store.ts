@@ -2,7 +2,7 @@
 "use client";
 
 import { create } from "zustand";
-import type { GameRuleSet, DeuceRule } from "@types/rules";
+import type { GameRuleSet, DeuceRule, SetTieRule } from "@types/rules";
 import { initState, scorePoint as engineScorePoint, formatDisplay, type EngineState, type Team } from "@lib/engine/engine";
 
 const DEFAULT_RULES: GameRuleSet = {
@@ -25,6 +25,7 @@ type GameStore = {
   reset: (server?: Team) => void;
   setDeuceRule: (rule: DeuceRule) => void;
   setSetsTarget: (sets: 1 | 2) => void;
+  setTiebreakRule: (rule: SetTieRule) => void;
   view: () => ReturnType<typeof formatDisplay>;
 };
 
@@ -76,5 +77,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  view: () => formatDisplay(get().state)
+  setTiebreakRule: (rule) => {
+    const rules = { ...get().rules, setTieRule: rule };
+    set({ 
+      rules, 
+      state: initState(rules, 'A'),
+      history: []
+    });
+  },
+
+  view: () => formatDisplay(get().state, get().rules)
 }));

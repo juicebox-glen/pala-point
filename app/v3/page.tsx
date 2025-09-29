@@ -12,11 +12,23 @@ export default function V3Home() {
   const reset = useGameStore((s) => s.reset);
   const setDeuceRule = useGameStore((s) => s.setDeuceRule);
   const setSetsTarget = useGameStore((s) => s.setSetsTarget);
+  const setTiebreakRule = useGameStore((s) => s.setTiebreakRule);
 
-  const view = useMemo(() => formatDisplay(state), [state]);
+  const view = useMemo(() => formatDisplay(state, rules), [state, rules]);
 
   const getDeuceMessage = () => {
+    // Priority 1: Show set/match point if detected
+    if (view.pointSituation) {
+      const team = view.pointSituation.team === 'A' ? 'Team A' : 'Team B';
+      return view.pointSituation.type === 'match-point' 
+        ? `MATCH POINT - ${team}` 
+        : `SET POINT - ${team}`;
+    }
+    
+    // Priority 2: Show tiebreak
     if (view.flags.tiebreak) return "Tiebreak";
+    
+    // Priority 3: Show deuce/golden/silver
     if (!view.flags.deuce) return "\u00A0";
     
     if (rules.deuceRule === "golden-point") {
@@ -56,6 +68,31 @@ export default function V3Home() {
               }`}
             >
               Best of 3
+            </button>
+          </div>
+
+          {/* Tiebreak Rule */}
+          <div className="inline-flex items-center gap-2 bg-zinc-900/70 rounded-xl px-3 py-2">
+            <span className="text-sm opacity-80">At 6-6:</span>
+            <button
+              onClick={() => setTiebreakRule("tiebreak")}
+              className={`px-3 py-1 rounded text-sm ${
+                rules.setTieRule === "tiebreak" 
+                  ? "bg-purple-600" 
+                  : "bg-zinc-700 hover:bg-zinc-600"
+              }`}
+            >
+              Tiebreak
+            </button>
+            <button
+              onClick={() => setTiebreakRule("play-on")}
+              className={`px-3 py-1 rounded text-sm ${
+                rules.setTieRule === "play-on" 
+                  ? "bg-purple-600" 
+                  : "bg-zinc-700 hover:bg-zinc-600"
+              }`}
+            >
+              Play On
             </button>
           </div>
 
@@ -105,7 +142,7 @@ export default function V3Home() {
           />
 
           <div className="space-y-2">
-            <div className="text-sm opacity-70">
+            <div className={`text-sm ${view.pointSituation ? 'text-yellow-400 font-bold' : 'opacity-70'}`}>
               {getDeuceMessage()}
             </div>
             <div className="text-lg">{view.message ?? "\u00A0"}</div>
