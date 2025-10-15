@@ -2,7 +2,12 @@
 @import '../styles/variables.css';
 @import '../styles/animations.css';
 
-/* Keep fonts if they exist */
+/* V3 Screen Styles */
+@import '../styles/v3-setup.css';
+@import '../styles/v3-game.css';
+@import '../styles/v3-server-announcement.css';
+
+/* Keep fonts */
 @import './fonts.css';
 
 /* Tailwind */
