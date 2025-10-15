@@ -1,0 +1,120 @@
+:root {
+    /* ===== COLORS ===== */
+    /* Team Colors */
+    --color-team-1: #04CA95;
+    --color-team-2: #BB86FC;
+    
+    /* Accent Colors */
+    --color-ball: #D0FF14;
+    --color-ball-border: #B8E000;
+    --color-accent: #BDF33F;
+    --color-accent-glow: rgba(205, 255, 64, 0.3);
+    
+    /* Backgrounds */
+    --color-bg-black: #000000;
+    --color-bg-dark: #121212;
+    --color-bg-dark-alt: #1E1E1E;
+    --color-bg-medium: #27272a;
+    --color-bg-court: #1E1E1F;
+    --color-bg-overlay: rgba(0, 0, 0, 0.8);
+    
+    /* UI States */
+    --color-selected: #16a34a; /* green-600 */
+    --color-border-inactive: rgba(255, 255, 255, 0.7);
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #9ca3af;
+    --color-text-muted: rgba(255, 255, 255, 0.7);
+    
+    /* ===== TYPOGRAPHY ===== */
+    --font-family: 'Inter', system-ui, sans-serif;
+    
+    /* Score Sizes */
+    --font-size-score: 26vw;
+    --font-size-score-adv: 18vw;
+    --font-size-score-tiebreak: 26vw;
+    
+    /* Layout Sizes */
+    --font-size-team-name: 3.5vw;
+    --font-size-game-score: 7.4vw;
+    --font-size-set-score: 7vw;
+    
+    /* Title Sizes */
+    --font-size-screen-title: 3.5vw;
+    --font-size-title-large: 8vw;
+    --font-size-title-huge: 10vw;
+    
+    /* Body Sizes */
+    --font-size-subtitle: 2vw;
+    --font-size-instruction: 2.5vw;
+    --font-size-indicator: 2.2vw;
+    --font-size-small: 1.8vw;
+    --font-size-tiny: 1.5vw;
+    
+    /* Setup Screen Sizes */
+    --font-size-setup-title: 7rem;
+    --font-size-setup-number: 10rem;
+    --font-size-setup-label: 3.5rem;
+    --font-size-summary: 4rem;
+    
+    /* Letter Spacing */
+    --letter-spacing-wide: 0.3em;
+    --letter-spacing-normal: 0.1em;
+    --letter-spacing-tight: 0.05em;
+    
+    /* ===== SPACING ===== */
+    --spacing-xs: 1vw;
+    --spacing-sm: 1.5vw;
+    --spacing-md: 3vw;
+    --spacing-lg: 6vw;
+    --spacing-xl: 7vw;
+    
+    /* Component Spacing */
+    --spacing-team-name-top: 6vw;
+    --spacing-team-name-bottom: 1.5vw;
+    --spacing-score-top: 1.5vw;
+    --spacing-indicators-bottom: 7vw;
+    --spacing-game-score-bottom: 5vw;
+    
+    /* ===== SIZES ===== */
+    /* Indicators */
+    --size-set-indicator: 3vw;
+    --size-set-indicator-gap: 1.5vw;
+    --size-dot-small: 1vw;
+    
+    /* Elements */
+    --size-ball: 3vw;
+    --size-ball-small: 2.5vw;
+    --size-player-circle: 6.8vw;
+    --size-player-circle-large: 8vw;
+    --size-swap-icon: 50vw;
+    
+    /* ===== BORDERS ===== */
+    --border-width: 0.8vw;
+    --border-width-thin: 4px;
+    --border-radius: 2vw;
+    --border-radius-sm: 0.8vw;
+    --border-radius-xs: 0.5vw;
+    
+    /* ===== DURATIONS ===== */
+    --duration-instant: 0ms;
+    --duration-fast: 300ms;
+    --duration-medium: 600ms;
+    --duration-slow: 2s;
+    --duration-swap: 10s;
+    --duration-auto-advance: 15s;
+    --duration-confetti: 4s;
+    
+    /* ===== TRANSITIONS ===== */
+    --transition-all: all 0.3s ease;
+    --transition-color: color 0.3s ease;
+    --transition-border: border-color 0.3s ease;
+    
+    /* ===== Z-INDEX ===== */
+    --z-background: 0;
+    --z-content: 1;
+    --z-border: 5;
+    --z-overlay: 10;
+    --z-indicator: 25;
+    --z-toast: 100;
+    --z-confetti: 9999;
+  }

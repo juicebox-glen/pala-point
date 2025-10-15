@@ -1,0 +1,131 @@
+/* ===== COURT BACKGROUND SCREENS ===== */
+.court-screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-bg-dark);
+    background-image: url('/images/court.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-primary);
+    font-family: var(--font-family);
+    z-index: var(--z-content);
+  }
+  
+  /* ===== COURT BORDERS ===== */
+  .court-border {
+    position: absolute;
+    inset: 0;
+    border: var(--border-width) solid transparent;
+    pointer-events: none;
+    z-index: var(--z-border);
+    transition: var(--transition-border);
+  }
+  
+  .court-border-team1 {
+    border-color: var(--color-team-1);
+  }
+  
+  .court-border-team2 {
+    border-color: var(--color-team-2);
+  }
+  
+  .court-border-left {
+    border-right: none;
+  }
+  
+  .court-border-right {
+    border-left: none;
+  }
+  
+  /* ===== TEXT OVERLAYS ===== */
+  .text-overlay {
+    background-color: var(--color-bg-dark);
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: center;
+    display: inline-block;
+    z-index: var(--z-overlay);
+  }
+  
+  .text-overlay-large {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  /* ===== SCREEN TITLES ===== */
+  .screen-title {
+    font-size: var(--font-size-screen-title);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    letter-spacing: var(--letter-spacing-normal);
+    text-align: center;
+    font-family: var(--font-family);
+    margin: 0;
+  }
+  
+  .screen-subtitle {
+    font-size: var(--font-size-subtitle);
+    color: var(--color-text-secondary);
+    text-align: center;
+    font-family: var(--font-family);
+  }
+  
+  /* ===== BOUNCING BALL ===== */
+  .bouncing-ball {
+    position: absolute;
+    width: var(--size-ball);
+    height: var(--size-ball);
+    background-color: var(--color-ball);
+    border-radius: 50%;
+    border: 2px solid var(--color-ball-border);
+    pointer-events: none;
+    z-index: var(--z-overlay);
+    box-shadow: 0 0 1vw rgba(208, 255, 20, 0.6);
+    user-select: none;
+  }
+  
+  .bouncing-ball-small {
+    width: var(--size-ball-small);
+    height: var(--size-ball-small);
+  }
+  
+  /* ===== PLAYER CIRCLES ===== */
+  .player-circle {
+    position: absolute;
+    width: var(--size-player-circle);
+    height: var(--size-player-circle);
+    border-radius: 50%;
+    z-index: var(--z-overlay);
+  }
+  
+  .player-circle-large {
+    width: var(--size-player-circle-large);
+    height: var(--size-player-circle-large);
+  }
+  
+  .player-circle-team1 {
+    background-color: var(--color-team-1);
+  }
+  
+  .player-circle-team2 {
+    background-color: var(--color-team-2);
+  }
+  
+  /* ===== SWAP ICON ===== */
+  .swap-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--size-swap-icon);
+    height: var(--size-swap-icon);
+    transform: translate(-50%, -50%);
+    background-image: url('/images/swap.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: var(--z-content);
+  }
