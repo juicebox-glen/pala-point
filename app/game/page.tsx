@@ -1,38 +1,31 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import ServerAnnouncement from "../components/ServerAnnouncement";
+import GameScoreboard from "../components/GameScoreboard";
 import { useGameStore } from "@stores/game-store";
-import ServerAnnouncement from "@/app/components/ServerAnnouncement";
+
+type GamePhase = 'server-announcement' | 'playing';
 
 export default function GamePage() {
-  const servingTeam = useGameStore((s) => s.servingTeam);
-  const [showServerAnnouncement, setShowServerAnnouncement] = useState(true);
+  const router = useRouter();
+  const [phase, setPhase] = useState<GamePhase>('server-announcement');
+  const reset = useGameStore((s) => s.reset);
+  const state = useGameStore((s) => s.state);
 
   const handleServerAnnouncementComplete = () => {
-    setShowServerAnnouncement(false);
-    // TODO: Start the actual game
+    setPhase('playing');
   };
 
-  if (showServerAnnouncement) {
-    return (
-      <ServerAnnouncement
-        servingTeam={servingTeam}
-        onComplete={handleServerAnnouncementComplete}
-      />
-    );
+  const handleReset = () => {
+    reset();
+    router.push('/'); // Navigate back to setup
+  };
+
+  if (phase === 'server-announcement') {
+    return <ServerAnnouncement server={state.server} onComplete={handleServerAnnouncementComplete} />;
   }
 
-  // TODO: Return actual game scoreboard
-  return (
-    <div className="screen-wrapper">
-      <div className="screen-content content-centered">
-        <h1 style={{ fontSize: '4rem', color: 'white' }}>
-          GAME SCOREBOARD GOES HERE
-        </h1>
-        <p style={{ fontSize: '2rem', color: '#9ca3af', marginTop: '2rem' }}>
-          Server announcement complete. Team {servingTeam} is serving.
-        </p>
-      </div>
-    </div>
-  );
+  return <GameScoreboard onReset={handleReset} />;
 }

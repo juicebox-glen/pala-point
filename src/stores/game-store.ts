@@ -23,6 +23,8 @@ type GameStore = {
   rules: MatchRules;
   state: EngineState;
   history: EngineState[];
+  sidesSwapped: boolean;
+  swapSides: () => void;
   scorePoint: (team: Team) => void;
   undo: () => void;
   reset: (server?: Team) => void;
@@ -44,6 +46,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   rules: DEFAULT_RULES,
   state: initState(DEFAULT_RULES, 'A'),
   history: [],
+  sidesSwapped: false,
+
+  swapSides: () => {
+    set((prev) => ({ sidesSwapped: !prev.sidesSwapped }));
+  },
 
   scorePoint: (team) => {
     const { state, rules, history } = get();
@@ -66,7 +73,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { rules } = get();
     set({
       state: initState(rules, server),
-      history: []
+      history: [],
+      sidesSwapped: false
     });
   },
 
@@ -134,7 +142,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  // NEW: Batch update all game rules at once
   setGameRules: (config) => {
     const rules: MatchRules = {
       scoringSystem: 'standard',
