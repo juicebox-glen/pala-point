@@ -1,0 +1,84 @@
+/* V3 Setup Flow Styles */
+
+/* Typography */
+.setup-title {
+    font-size: 7rem;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    color: var(--color-text-primary);
+  }
+  
+  .setup-number {
+    font-size: 10rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-align: center;
+    line-height: 0.8;
+    margin-bottom: 1rem;
+    color: var(--color-text-primary);
+    opacity: 0.55;
+    transition: all 0.3s ease;
+  }
+  
+  .tile.selected .setup-number {
+    color: var(--color-bg-dark);
+    opacity: 1;
+  }
+  
+  .setup-label {
+    font-size: 3.5rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-align: center;
+    color: var(--color-text-primary);
+    opacity: 0.55;
+    transition: all 0.3s ease;
+  }
+  
+  .tile.selected .setup-label {
+    color: var(--color-bg-dark);
+    opacity: 1;
+  }
+  
+  /* Summary screen content */
+  .setup-summary-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3rem;
+    text-align: center;
+  }
+  
+  .setup-summary-line {
+    font-size: 4rem;
+    font-weight: bold;
+    color: var(--color-text-primary);
+    letter-spacing: 0.1em;
+  }
+  
+  .setup-summary-action {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--color-selected);
+    letter-spacing: 0.1em;
+    margin-top: 4rem;
+  }
+  
+  /* Hold progress indicator */
+  .setup-hold-progress {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: rgba(255, 255, 255, 0.1);
+    z-index: 9999;
+  }
+  
+  .setup-hold-progress-bar {
+    height: 100%;
+    background-color: var(--color-selected);
+    transition: width 50ms linear;
+  }

@@ -1,6 +1,7 @@
 /* V3 Clean - Import Design System */
 @import '../styles/variables.css';
 @import '../styles/animations.css';
+@import '../styles/layouts.css';
 
 /* V3 Screen Styles */
 @import '../styles/v3-setup.css';
