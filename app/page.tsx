@@ -1326,6 +1326,35 @@ useEffect(() => {
     }
   }, [showSetWin, showCoinToss, serverSelectionPhase])
 
+// Skip swap sides message with any key press
+useEffect(() => {
+  if (!showSwapMessage) return;
+
+  const handleSkipSwap = () => {
+    // Cancel the timer
+    cancelSwapTimer();
+    
+    // Immediately execute the swap
+    setGameState((current) => {
+      if (current.swapSidesTimerActive && current.shouldSwapSides) {
+        return {
+          ...current,
+          sidesSwapped: !current.sidesSwapped,
+          shouldSwapSides: false,
+          swapSidesTimerActive: false,
+        }
+      }
+      return current
+    });
+    
+    setShowSwapMessage(false);
+    setSwapAnimationActive(false);
+  };
+
+  window.addEventListener('keydown', handleSkipSwap);
+  return () => window.removeEventListener('keydown', handleSkipSwap);
+}, [showSwapMessage, cancelSwapTimer]);
+
 // Keyboard event handler
 useEffect(() => {
   const handleKeyPress = (e: KeyboardEvent) => {
