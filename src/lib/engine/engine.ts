@@ -29,6 +29,18 @@ export interface EngineState {
     servesInCurrentTurn: number;
     totalServesPlayed: number;
   };
+
+  // Match statistics
+  stats: {
+    matchStartTime: number;
+    totalPointsPlayed: number;
+    pointsWon: { A: number; B: number };
+    servicePointsWon: { A: number; B: number };
+    breaks: { A: number; B: number };
+    longestStreak: { team: Team | null; streak: number };
+    currentStreak: { team: Team | null; streak: number };
+    pointHistory: Team[]; // Array of which team won each point
+  };
 }
 
 export interface DisplayModel {
@@ -58,6 +70,16 @@ export function initState(rules: MatchRules, startServer: Team): EngineState {
     sets: [{ gamesA: 0, gamesB: 0 }],
     currentGame: { pA: 0, pB: 0, inTiebreak: false, deuceCount: 0 },
     server: startServer,
+    stats: {
+      matchStartTime: Date.now(),
+      totalPointsPlayed: 0,
+      pointsWon: { A: 0, B: 0 },
+      servicePointsWon: { A: 0, B: 0 },
+      breaks: { A: 0, B: 0 },
+      longestStreak: { team: null, streak: 0 },
+      currentStreak: { team: null, streak: 0 },
+      pointHistory: [],
+    },
   };
 
   // Initialize Americano state if needed
@@ -109,9 +131,41 @@ function standardGameWinner(pA: number, pB: number): Team | null {
   return null;
 }
 
+// Helper function to update stats after a point
+function updateStats(s: EngineState, team: Team, wasBreakPoint: boolean = false) {
+  s.stats.totalPointsPlayed++;
+  s.stats.pointsWon[team]++;
+  s.stats.pointHistory.push(team);
+
+  // Service points won
+  if (s.server === team) {
+    s.stats.servicePointsWon[team]++;
+  }
+
+  // Breaks tracking (tracked when game is won, not per point)
+  if (wasBreakPoint) {
+    s.stats.breaks[team]++;
+  }
+
+  // Update streak
+  if (s.stats.currentStreak.team === team) {
+    s.stats.currentStreak.streak++;
+  } else {
+    s.stats.currentStreak = { team, streak: 1 };
+  }
+
+  // Update longest streak
+  if (s.stats.currentStreak.streak > s.stats.longestStreak.streak) {
+    s.stats.longestStreak = { ...s.stats.currentStreak };
+  }
+}
+
 export function scorePoint(s: EngineState, rules: MatchRules, team: Team): EngineState {
   s = JSON.parse(JSON.stringify(s));
   if (s.finished) return s;
+
+  // Update stats for every point
+  updateStats(s, team);
 
   // AMERICANO SCORING
   if (rules.scoringSystem === 'americano' && s.americano) {
@@ -157,6 +211,12 @@ export function scorePoint(s: EngineState, rules: MatchRules, team: Team): Engin
     const winner = (a >= 7 && a - b >= 2) ? 'A' : (b >= 7 && b - a >= 2) ? 'B' : null;
 
     if (winner) {
+      // Check if this was a break (winner is not the server)
+      const wasBreak = winner !== s.server;
+      if (wasBreak) {
+        s.stats.breaks[winner]++;
+      }
+
       if (winner === 'A') set.gamesA++;
       else set.gamesB++;
 
@@ -200,6 +260,12 @@ export function scorePoint(s: EngineState, rules: MatchRules, team: Team): Engin
 
   // GOLDEN POINT
   if (rules.deuceRule === "golden-point" && wasDeuce) {
+    // Check if this was a break
+    const wasBreak = team !== s.server;
+    if (wasBreak) {
+      s.stats.breaks[team]++;
+    }
+
     if (team === "A") set.gamesA++;
     else set.gamesB++;
 
@@ -222,6 +288,12 @@ export function scorePoint(s: EngineState, rules: MatchRules, team: Team): Engin
   // SILVER POINT
   if (rules.deuceRule === "silver-point") {
     if (wasDeuce && s.currentGame.deuceCount >= 2) {
+      // Check if this was a break
+      const wasBreak = team !== s.server;
+      if (wasBreak) {
+        s.stats.breaks[team]++;
+      }
+
       if (team === "A") set.gamesA++;
       else set.gamesB++;
 
@@ -245,6 +317,12 @@ export function scorePoint(s: EngineState, rules: MatchRules, team: Team): Engin
   // STANDARD WIN CHECK (advantage rule, win by 2)
   const winner = standardGameWinner(s.currentGame.pA, s.currentGame.pB);
   if (winner) {
+    // Check if this was a break
+    const wasBreak = winner !== s.server;
+    if (wasBreak) {
+      s.stats.breaks[winner]++;
+    }
+
     if (winner === 'A') set.gamesA++;
     else set.gamesB++;
 
@@ -353,7 +431,7 @@ function getPointSituation(s: EngineState, rules: MatchRules): {
     
     if (teamBCanWinGame) {
       const gamesAfterWin = set.gamesB + 1;
-      const wouldWinSet = gamesAfterWin >= 6 && gamesAfterWin - set.gamesA >= 2; // FIXED: was set.gamesB
+      const wouldWinSet = gamesAfterWin >= 6 && gamesAfterWin - set.gamesA >= 2;
       
       if (wouldWinSet) {
         const setsAfterWin = setsWon.B + 1;

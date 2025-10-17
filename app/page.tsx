@@ -109,9 +109,10 @@ export default function SetupPage() {
         });
       }
 
-      // Random server selection
-      const randomServer = Math.random() < 0.5 ? 'A' : 'B';
-      reset(randomServer);
+     // Random server selection
+const randomServer = Math.random() < 0.5 ? 'A' : 'B';
+console.log('🎲 Random server selected:', randomServer, 'Random value:', Math.random());
+reset(randomServer);
       
       // Navigate to game
       router.push('/game');

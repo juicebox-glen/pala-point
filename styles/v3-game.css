@@ -57,3 +57,43 @@
     background-color: var(--color-text-primary);
     opacity: 0.5;
   }
+
+  /* Point Situation Indicator */
+.point-situation-overlay {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  pointer-events: none;
+}
+
+.point-situation-badge {
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 0 2vw rgba(189, 243, 63, 0.3);
+}
+
+.point-situation-badge {
+  font-size: var(--font-size-medium);
+  font-weight: 600;
+  color: var(--color-accent);
+  letter-spacing: var(--letter-spacing-wide);
+  text-align: center;
+  white-space: nowrap;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}

@@ -24,8 +24,7 @@ export default function GamePage() {
   };
 
   if (phase === 'server-announcement') {
-    return <ServerAnnouncement server={state.server} onComplete={handleServerAnnouncementComplete} />;
+    return <ServerAnnouncement servingTeam={state.server} onComplete={handleServerAnnouncementComplete} />;
   }
-
   return <GameScoreboard onReset={handleReset} />;
 }
