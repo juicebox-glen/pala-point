@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@stores/game-store";
 import type { DeuceRule, SetTieRule } from "@types/rules";
+import Screensaver from "@/app/components/Screensaver";
 
 type SetupStep = 'game-type' | 'deuce-rule' | 'sets' | 'tiebreak' | 'summary';
 type GameTypeSelection = 'quick-play' | 'custom';
@@ -41,6 +42,11 @@ export default function SetupPage() {
     holdStartTime: 0,
     isHolding: false,
   });
+
+  // Screensaver state
+  const [showScreensaver, setShowScreensaver] = useState(false);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Navigation: determine next step
   const getNextStep = useCallback((currentStep: SetupStep, gameType: GameTypeSelection): SetupStep | 'game' => {
@@ -109,10 +115,9 @@ export default function SetupPage() {
         });
       }
 
-     // Random server selection
-const randomServer = Math.random() < 0.5 ? 'A' : 'B';
-console.log('🎲 Random server selected:', randomServer, 'Random value:', Math.random());
-reset(randomServer);
+      // Random server selection
+      const randomServer = Math.random() < 0.5 ? 'A' : 'B';
+      reset(randomServer);
       
       // Navigate to game
       router.push('/game');
@@ -156,9 +161,51 @@ reset(randomServer);
     });
   }, []);
 
+  // Register activity
+  const registerActivity = useCallback(() => {
+    setLastActivity(Date.now());
+    if (showScreensaver) {
+      setShowScreensaver(false);
+    }
+  }, [showScreensaver]);
+
+  // Idle detection for screensaver (30 seconds on setup)
+  useEffect(() => {
+    const checkIdle = () => {
+      const idleTime = Date.now() - lastActivity;
+      if (idleTime > 30000) { // 30 seconds
+        setShowScreensaver(true);
+      }
+    };
+
+    idleTimerRef.current = setInterval(checkIdle, 1000);
+
+    return () => {
+      if (idleTimerRef.current) {
+        clearInterval(idleTimerRef.current);
+      }
+    };
+  }, [lastActivity]);
+
+  // Track activity on mouse movement
+  useEffect(() => {
+    const handleActivity = () => registerActivity();
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('mousedown', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('mousedown', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+    };
+  }, [registerActivity]);
+
   // Keyboard event handlers
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      registerActivity();
       const key = e.key.toLowerCase();
       if (e.repeat) return;
 
@@ -183,7 +230,7 @@ reset(randomServer);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [handleToggle, startHold, cancelHold]);
+  }, [handleToggle, startHold, cancelHold, registerActivity]);
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -237,15 +284,23 @@ reset(randomServer);
 
   return (
     <>
-      {renderScreen()}
+      {showScreensaver && (
+        <Screensaver onDismiss={() => setShowScreensaver(false)} />
+      )}
+      
+      {!showScreensaver && (
+        <>
+          {renderScreen()}
 
-      {state.isHolding && (
-        <div className="setup-hold-progress">
-          <div 
-            className="setup-hold-progress-bar"
-            style={{ width: `${holdProgress * 100}%` }}
-          />
-        </div>
+          {state.isHolding && (
+            <div className="setup-hold-progress">
+              <div 
+                className="setup-hold-progress-bar"
+                style={{ width: `${holdProgress * 100}%` }}
+              />
+            </div>
+          )}
+        </>
       )}
     </>
   );

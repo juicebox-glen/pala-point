@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { Team } from "@lib/engine/engine";
 import type { EngineState } from "@lib/engine/engine";
+import Screensaver from "./Screensaver";
 
 interface MatchWinProps {
   state: EngineState;
@@ -17,15 +18,29 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
   const autoSlideTimerRef = useRef<NodeJS.Timeout | null>(null);
   const completedRef = useRef(false);
 
+  // Screensaver state
+  const [showScreensaver, setShowScreensaver] = useState(false);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleNewGame = useCallback(() => {
     if (completedRef.current) return;
     completedRef.current = true;
     setTimeout(() => onNewGame(), 0);
   }, [onNewGame]);
 
+  // Register activity
+  const registerActivity = useCallback(() => {
+    setLastActivity(Date.now());
+    if (showScreensaver) {
+      setShowScreensaver(false);
+    }
+  }, [showScreensaver]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      registerActivity();
       const key = e.key.toLowerCase();
       
       if (key === 'r') {
@@ -43,7 +58,7 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [handleNewGame]);
+  }, [handleNewGame, registerActivity]);
 
   // Auto-cycle slides
   useEffect(() => {
@@ -71,7 +86,45 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
     return () => clearTimeout(resetTimer);
   }, [manualNavigation]);
 
+  // Idle detection for screensaver (5 minutes on match win)
+  useEffect(() => {
+    const checkIdle = () => {
+      const idleTime = Date.now() - lastActivity;
+      if (idleTime > 300000) { // 5 minutes
+        setShowScreensaver(true);
+      }
+    };
+
+    idleTimerRef.current = setInterval(checkIdle, 1000);
+
+    return () => {
+      if (idleTimerRef.current) {
+        clearInterval(idleTimerRef.current);
+      }
+    };
+  }, [lastActivity]);
+
+  // Track activity on mouse movement
+  useEffect(() => {
+    const handleActivity = () => registerActivity();
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('mousedown', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('mousedown', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+    };
+  }, [registerActivity]);
+
   if (!state.finished) return null;
+
+  // Show screensaver if idle
+  if (showScreensaver) {
+    return <Screensaver onDismiss={() => setShowScreensaver(false)} />;
+  }
 
   const winner = state.finished.winner;
   const winnerName = winner === 'A' ? 'TEAM A' : 'TEAM B';

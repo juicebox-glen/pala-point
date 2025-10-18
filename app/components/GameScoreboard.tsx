@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useGameStore } from "@stores/game-store";
 import { formatDisplay } from "@lib/engine/engine";
 import type { Team } from "@lib/engine/engine";
 import SideSwap from "./SideSwap";
 import SetWin from "./SetWin";
 import MatchWin from "./MatchWin";
+import Screensaver from "./Screensaver";
 
 interface GameScoreboardProps {
   onReset: () => void;
@@ -32,6 +33,11 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   const prevTiebreakPointsRef = useRef(0);
   const prevSetsWonRef = useRef({ A: 0, B: 0 });
 
+  // Screensaver state
+  const [showScreensaver, setShowScreensaver] = useState(false);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Format the display using the engine
   const view = formatDisplay(state, rules);
   const isTeamAServing = state.server === 'A';
@@ -40,11 +46,20 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   const teamOnLeft: Team = sidesSwapped ? 'B' : 'A';
   const teamOnRight: Team = sidesSwapped ? 'A' : 'B';
 
+  // Register activity
+  const registerActivity = useCallback(() => {
+    setLastActivity(Date.now());
+    if (showScreensaver) {
+      setShowScreensaver(false);
+    }
+  }, [showScreensaver]);
+
   // Keyboard controls
   useEffect(() => {
     if (showSideSwap || showSetWin || state.finished) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      registerActivity();
       const key = e.key.toLowerCase();
       
       if (key === 'q') {
@@ -60,7 +75,40 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [scorePoint, undo, onReset, showSideSwap, showSetWin, teamOnLeft, teamOnRight, state.finished]);
+  }, [scorePoint, undo, onReset, showSideSwap, showSetWin, teamOnLeft, teamOnRight, state.finished, registerActivity]);
+
+  // Idle detection for screensaver (10 minutes during game)
+  useEffect(() => {
+    const checkIdle = () => {
+      const idleTime = Date.now() - lastActivity;
+      if (idleTime > 600000) { // 10 minutes
+        setShowScreensaver(true);
+      }
+    };
+
+    idleTimerRef.current = setInterval(checkIdle, 1000);
+
+    return () => {
+      if (idleTimerRef.current) {
+        clearInterval(idleTimerRef.current);
+      }
+    };
+  }, [lastActivity]);
+
+  // Track activity on mouse movement
+  useEffect(() => {
+    const handleActivity = () => registerActivity();
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('mousedown', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('mousedown', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+    };
+  }, [registerActivity]);
 
   // Set win detection
   useEffect(() => {
@@ -145,8 +193,10 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
     prevTiebreakPointsRef.current = 0;
   };
 
-  // IMPORTANT: All hooks must be called before any conditional returns
-  // Now we can have conditional renders:
+  // Show screensaver if idle
+  if (showScreensaver) {
+    return <Screensaver onDismiss={() => setShowScreensaver(false)} />;
+  }
 
   // Show match win if finished
   if (state.finished && state.finished.winner) {
@@ -217,8 +267,8 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
           </div>
         </div>
 
-      {/* Serving border */}
-      <div
+        {/* Serving border */}
+        <div
           className={`screen-border-serving-${servingBorderSide}`}
           style={{ borderColor: servingBorderColor }}
         />
