@@ -1,65 +1,58 @@
-// src/stores/game-store.ts
-"use client";
+import { create } from 'zustand';
+import { initState, scorePoint as engineScorePoint, formatDisplay } from '@lib/engine/engine';
+import type { GameState, MatchRules, Team } from '@lib/engine/engine';
 
-import { create } from "zustand";
-import type { MatchRules, DeuceRule, SetTieRule, ScoringSystem } from "@types/rules";
-import type { ClubConfig } from "@types/config";
-import { initState, scorePoint as engineScorePoint, formatDisplay, type EngineState, type Team } from "@lib/engine/engine";
+interface GameStore {
+  state: GameState;
+  rules: MatchRules;
+  history: GameState[];
+  sidesSwapped: boolean;
+  
+  scorePoint: (team: Team) => void;
+  undo: () => void;
+  reset: (server?: Team) => void;
+  swapSides: () => void;
+  
+  setDeuceRule: (rule: 'advantage' | 'silver' | 'golden') => void;
+  setSetsTarget: (sets: 1 | 3) => void;
+  setTiebreakRule: (rule: 'tiebreak' | 'play-on') => void;
+  setScoringSystem: (system: 'standard' | 'americano') => void;
+  setGameRules: (config: {
+    deuceRule: 'advantage' | 'silver' | 'golden';
+    setTieRule: 'tiebreak' | 'play-on';
+    setsTarget: 1 | 3;
+  }) => void;
+  
+  view: () => ReturnType<typeof formatDisplay>;
+}
 
-import clubConfigData from "@config/club-config.example.json";
-const clubConfig = clubConfigData as ClubConfig;
-
-const DEFAULT_RULES: MatchRules = {
+export const useGameStore = create<GameStore>((set, get) => ({
+  state: initState({
     scoringSystem: 'standard',
     deuceRule: 'advantage',
     setTieRule: 'tiebreak',
     setsTarget: 1,
     firstServer: 'random',
-  };
-
-type GameStore = {
-  clubId: string;
-  courtId: string;
-  rules: MatchRules;
-  state: EngineState;
-  history: EngineState[];
-  sidesSwapped: boolean;
-  swapSides: () => void;
-  scorePoint: (team: Team) => void;
-  undo: () => void;
-  reset: (server?: Team) => void;
-  setDeuceRule: (rule: DeuceRule) => void;
-  setSetsTarget: (sets: 1 | 2) => void;
-  setTiebreakRule: (rule: SetTieRule) => void;
-  setScoringSystem: (system: ScoringSystem) => void;
-  setGameRules: (config: { 
-    deuceRule: DeuceRule; 
-    setsTarget: 1 | 2; 
-    setTieRule: SetTieRule; 
-  }) => void;
-  view: () => ReturnType<typeof formatDisplay>;
-};
-
-export const useGameStore = create<GameStore>((set, get) => ({
-  clubId: clubConfig.clubId,
-  courtId: clubConfig.courtId,
-  rules: DEFAULT_RULES,
-  state: initState(DEFAULT_RULES, 'A'),
+  }, 'A'),
+  
+  rules: {
+    scoringSystem: 'standard',
+    deuceRule: 'advantage',
+    setTieRule: 'tiebreak',
+    setsTarget: 1,
+    firstServer: 'random',
+  },
+  
   history: [],
   sidesSwapped: false,
 
-  swapSides: () => {
-    set((prev) => ({ sidesSwapped: !prev.sidesSwapped }));
-  },
-
   scorePoint: (team) => {
     const { state, rules, history } = get();
-    const next = engineScorePoint(state, rules, team);
-    if (next !== state) {
-      const newHistory = [...history, state];
-      if (newHistory.length > 100) newHistory.shift();
-      set({ state: next, history: newHistory });
-    }
+    const newState = engineScorePoint(state, rules, team);
+    set({ 
+      state: newState, 
+      history: [...history, state].slice(-50)
+    });
   },
 
   undo: () => {
@@ -76,6 +69,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       history: [],
       sidesSwapped: false
     });
+  },
+
+  swapSides: () => {
+    set((state) => ({ sidesSwapped: !state.sidesSwapped }));
   },
 
   setDeuceRule: (rule) => {

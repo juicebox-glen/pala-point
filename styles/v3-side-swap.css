@@ -1,134 +1,111 @@
 /* V3 Side Swap Styles */
 
-/* Rotating icon container */
-.side-swap-icon-container {
-    position: absolute;
-    top: 20%;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: var(--z-overlay);
+/* Rotating swap icon background (SVG) */
+.side-swap-icon-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50vw;
+  height: 50vw;
+  transform: translate(-50%, -50%);
+  background-image: url('/images/swap.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 1;
+  animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
   }
-  
-  /* Rotating swap icon */
-  .side-swap-icon {
-    font-size: 15vw;
-    color: var(--color-accent);
-    animation: rotate 3s linear infinite;
-    line-height: 1;
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
   }
-  
-  /* Player circles container */
-  .side-swap-circles {
-    position: absolute;
-    inset: 0;
-    z-index: var(--z-overlay);
-    pointer-events: none;
+}
+
+/* Player circles container */
+.side-swap-circles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Player circles - Only 2 total */
+.side-swap-circle {
+  position: absolute;
+  width: 8vw;
+  height: 8vw;
+  border-radius: 50%;
+  z-index: 2;
+  animation: swapSlide 2s ease-in-out forwards;
+}
+
+/* Left side top position */
+.side-swap-left-top {
+  top: 25%;
+  left: 20%;
+  animation-name: swapLeftToRight;
+}
+
+/* Left side bottom position */
+.side-swap-left-bottom {
+  bottom: 25%;
+  left: 20%;
+  animation-name: swapLeftToRight;
+}
+
+/* Right side top position */
+.side-swap-right-top {
+  top: 25%;
+  right: 20%;
+  animation-name: swapRightToLeft;
+}
+
+/* Right side bottom position */
+.side-swap-right-bottom {
+  bottom: 25%;
+  right: 20%;
+  animation-name: swapRightToLeft;
+}
+
+@keyframes swapLeftToRight {
+  0% {
+    transform: translateX(0);
   }
-  
-  /* Player circles - animate from left to right and vice versa */
-  .side-swap-circle {
-    position: absolute;
-    width: var(--size-player-circle);
-    height: var(--size-player-circle);
-    border-radius: 50%;
-    animation: swapSides 2s ease-in-out forwards;
+  100% {
+    transform: translateX(60vw);
   }
-  
-  /* Starting positions - Team A left, Team B right */
-  .side-swap-circle-1 {
-    left: 30%;
-    top: 18%;
-    animation-name: swapLeftToRight1;
+}
+
+@keyframes swapRightToLeft {
+  0% {
+    transform: translateX(0);
   }
-  
-  .side-swap-circle-2 {
-    left: 19%;
-    top: 71%;
-    animation-name: swapLeftToRight2;
+  100% {
+    transform: translateX(-60vw);
   }
-  
-  .side-swap-circle-3 {
-    right: 19%;
-    bottom: 71%;
-    animation-name: swapRightToLeft1;
-  }
-  
-  .side-swap-circle-4 {
-    right: 30%;
-    bottom: 18%;
-    animation-name: swapRightToLeft2;
-  }
-  
-  /* Animations for circles swapping sides */
-  @keyframes swapLeftToRight1 {
-    0% {
-      left: 30%;
-      top: 18%;
-    }
-    100% {
-      left: 70%;
-      top: 82%;
-    }
-  }
-  
-  @keyframes swapLeftToRight2 {
-    0% {
-      left: 19%;
-      top: 71%;
-    }
-    100% {
-      left: 81%;
-      top: 29%;
-    }
-  }
-  
-  @keyframes swapRightToLeft1 {
-    0% {
-      right: 19%;
-      bottom: 71%;
-    }
-    100% {
-      right: 81%;
-      bottom: 29%;
-    }
-  }
-  
-  @keyframes swapRightToLeft2 {
-    0% {
-      right: 30%;
-      bottom: 18%;
-    }
-    100% {
-      right: 70%;
-      bottom: 82%;
-    }
-  }
-  
-  /* Text overlay */
-  .side-swap-text-overlay {
-    background-color: var(--color-bg-dark);
-    padding: var(--spacing-sm) var(--spacing-md);
-    text-align: center;
-    display: inline-block;
-    z-index: var(--z-overlay);
-  }
-  
-  /* Title */
-  .side-swap-title {
-    font-size: var(--font-size-screen-title);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    letter-spacing: var(--letter-spacing-normal);
-    margin: 0;
-    text-transform: uppercase;
-    font-family: var(--font-family);
-  }
-  
-  /* Countdown number */
-  .side-swap-countdown {
-    font-size: 8vw;
-    font-weight: 700;
-    color: var(--color-accent);
-    margin-top: 2vw;
-    z-index: var(--z-overlay);
-  }
+}
+
+/* Text overlay */
+.side-swap-text-overlay {
+  background-color: var(--color-bg-dark);
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: center;
+  display: inline-block;
+  z-index: 10;
+  animation: fadeIn 0.5s ease-in;
+}
+
+/* Title */
+.side-swap-title {
+  font-size: var(--font-size-screen-title);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: var(--letter-spacing-normal);
+  margin: 0;
+  text-transform: uppercase;
+  font-family: var(--font-family);
+}

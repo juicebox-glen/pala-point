@@ -1,84 +1,152 @@
 /* V3 Setup Flow Styles */
 
+/* Tile animation on load */
+.screen-wrapper {
+  animation: fade-in 0.5s ease-out;
+}
+
+.tile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-tertiary);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transform: scale(1);
+}
+
+.tile.selected {
+  background-color: var(--color-primary);
+  transform: scale(1.02);
+  box-shadow: inset 0 0 60px rgba(4, 202, 149, 0.3);
+}
+
+/* Hold Progress Bar - Fills from left to right */
+.hold-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.25);
+  transition: width 0.075s linear;
+  z-index: 0;
+  pointer-events: none;
+}
+
 /* Typography */
 .setup-title {
-    font-size: 7rem;
-    font-weight: bold;
-    text-align: center;
-    line-height: 1;
-    letter-spacing: 0.05em;
-    color: var(--color-text-primary);
+  font-size: 6vw;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #9CA3AF;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.tile.selected .setup-title {
+  color: #FFFFFF;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+.setup-number {
+  font-size: 35vw;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #9CA3AF;
+  text-align: center;
+  line-height: 0.8;
+  margin-bottom: 4vw;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.tile.selected .setup-number {
+  color: #FFFFFF;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+.setup-label {
+  font-size: 4vw;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #9CA3AF;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.tile.selected .setup-label {
+  color: #FFFFFF;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+/* Summary Screen */
+.setup-summary-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2vw;
+  position: relative;
+  z-index: 1;
+}
+
+.setup-summary-line {
+  font-size: 6vw;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: var(--letter-spacing-normal);
+  text-align: center;
+  animation: fadeInUp 0.6s ease-out backwards;
+}
+
+.setup-summary-line:nth-child(1) { animation-delay: 0.1s; }
+.setup-summary-line:nth-child(2) { animation-delay: 0.2s; }
+.setup-summary-line:nth-child(3) { animation-delay: 0.3s; }
+
+.setup-summary-action {
+  font-size: 3vw;
+  font-weight: 600;
+  color: var(--color-primary);
+  letter-spacing: var(--letter-spacing-normal);
+  text-align: center;
+  margin-top: 6vw;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Fade-in animation on load */
+@keyframes fade-in {
+  from {
+    opacity: 0;
   }
-  
-  .setup-number {
-    font-size: 10rem;
-    font-weight: 700;
-    letter-spacing: 0;
-    text-align: center;
-    line-height: 0.8;
-    margin-bottom: 1rem;
-    color: var(--color-text-primary);
-    opacity: 0.55;
-    transition: all 0.3s ease;
-  }
-  
-  .tile.selected .setup-number {
-    color: var(--color-bg-dark);
+  to {
     opacity: 1;
   }
-  
-  .setup-label {
-    font-size: 3.5rem;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    text-align: center;
-    color: var(--color-text-primary);
-    opacity: 0.55;
-    transition: all 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(2vw);
   }
-  
-  .tile.selected .setup-label {
-    color: var(--color-bg-dark);
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
     opacity: 1;
   }
-  
-  /* Summary screen content */
-  .setup-summary-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3rem;
-    text-align: center;
+  50% {
+    opacity: 0.7;
   }
-  
-  .setup-summary-line {
-    font-size: 4rem;
-    font-weight: bold;
-    color: var(--color-text-primary);
-    letter-spacing: 0.1em;
-  }
-  
-  .setup-summary-action {
-    font-size: 2rem;
-    font-weight: 600;
-    color: var(--color-selected);
-    letter-spacing: 0.1em;
-    margin-top: 4rem;
-  }
-  
-  /* Hold progress indicator */
-  .setup-hold-progress {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background-color: rgba(255, 255, 255, 0.1);
-    z-index: 9999;
-  }
-  
-  .setup-hold-progress-bar {
-    height: 100%;
-    background-color: var(--color-selected);
-    transition: width 50ms linear;
-  }
+}

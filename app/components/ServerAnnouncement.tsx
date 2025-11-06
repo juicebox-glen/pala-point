@@ -11,7 +11,7 @@ interface ServerAnnouncementProps {
 export default function ServerAnnouncement({ servingTeam, onComplete }: ServerAnnouncementProps) {
   const [phase, setPhase] = useState<1 | 2>(1);
   const [ballPosition, setBallPosition] = useState({ x: 50, y: 50 });
-  const ballVelocityRef = useRef({ x: 2, y: 1.5 });
+  const ballVelocityRef = useRef({ x: 0.3, y: 0.2 }); // FIXED: Slower velocities
   const animationRef = useRef<number | null>(null);
   const phaseTimerRef = useRef<NodeJS.Timeout | null>(null);
   const completeTimerRef = useRef<NodeJS.Timeout | null>(null);

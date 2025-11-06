@@ -9,7 +9,7 @@
   inset: 0;
   padding: 0.5vw;
   box-sizing: border-box;
-  background-color: var(--color-bg-black);
+  background-color: #000000;
 }
 
 .screen-content {
@@ -155,7 +155,7 @@
 
 /* Default tile */
 .tile {
-  background-color: var(--color-bg-medium);
+  background-color: #2A2A2A;
   transition: all 0.3s ease;
   cursor: pointer;
   position: relative;
@@ -163,25 +163,25 @@
 
 /* Selected state (green) */
 .tile.selected {
-  background-color: var(--color-selected);
+  background-color: #04CA95;
 }
 
 /* Team colors */
 .tile.team-1 {
-  background-color: var(--color-team-1-bg);
+  background-color: #04CA95;
 }
 
 .tile.team-2 {
-  background-color: var(--color-team-2-bg);
+  background-color: #BB86FC;
 }
 
-/* Darker variants for game scoreboard */
+/* Game scoreboard backgrounds - FIXED BY SIDE (don't swap with teams) */
 .tile.team-1-dark {
-  background-color: var(--color-team-1-dark);
+  background-color: #121212; /* Left side - darker black */
 }
 
 .tile.team-2-dark {
-  background-color: var(--color-team-2-dark);
+  background-color: #1E1E1F; /* Right side - slightly lighter black */
 }
 
 /* ===================================================================
@@ -201,18 +201,18 @@
 .screen-border {
   position: absolute;
   inset: 0;
-  border: var(--border-width) solid;
+  border: 0.8vw solid;
   pointer-events: none;
-  z-index: var(--z-border);
+  z-index: 5;
 }
 
 /* Team-colored borders */
 .screen-border.team-1 {
-  border-color: var(--color-team-1);
+  border-color: #04CA95;
 }
 
 .screen-border.team-2 {
-  border-color: var(--color-team-2);
+  border-color: #BB86FC;
 }
 
 /* Half-screen serving borders (left or right side only) */
@@ -222,12 +222,12 @@
   left: 0;
   bottom: 0;
   width: 50%;
-  border-top: var(--border-width) solid;
-  border-left: var(--border-width) solid;
-  border-bottom: var(--border-width) solid;
+  border-top: 0.8vw solid;
+  border-left: 0.8vw solid;
+  border-bottom: 0.8vw solid;
   border-right: none;
   pointer-events: none;
-  z-index: var(--z-border);
+  z-index: 5;
 }
 
 .screen-border-serving-right {
@@ -236,12 +236,12 @@
   right: 0;
   bottom: 0;
   width: 50%;
-  border-top: var(--border-width) solid;
-  border-right: var(--border-width) solid;
-  border-bottom: var(--border-width) solid;
+  border-top: 0.8vw solid;
+  border-right: 0.8vw solid;
+  border-bottom: 0.8vw solid;
   border-left: none;
   pointer-events: none;
-  z-index: var(--z-border);
+  z-index: 5;
 }
 
 /* ===================================================================
@@ -255,7 +255,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  z-index: var(--z-content);
+  z-index: 10;
 }
 
 .content-centered-horizontal {
@@ -292,21 +292,21 @@
 
 /* Z-index layers */
 .layer-background {
-  z-index: var(--z-background);
+  z-index: 1;
 }
 
 .layer-border {
-  z-index: var(--z-border);
+  z-index: 5;
 }
 
 .layer-content {
-  z-index: var(--z-content);
+  z-index: 10;
 }
 
 .layer-overlay {
-  z-index: var(--z-overlay);
+  z-index: 20;
 }
 
 .layer-toast {
-  z-index: var(--z-toast);
+  z-index: 100;
 }
