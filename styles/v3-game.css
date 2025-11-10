@@ -14,7 +14,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* Push content up */
+  justify-content: center;
   padding-top: 0;
 }
 
@@ -26,20 +26,18 @@
   color: var(--color-text-primary);
   opacity: var(--opacity-secondary);
   text-transform: uppercase;
-  margin-top: 6vw;
-  margin-bottom: 0; /* No bottom margin */
+  position: absolute;
+  top: 6vw; /* ADJUST THIS to move team name up/down */
   font-family: var(--font-family);
 }
 
 /* Score display area (vertically centered) */
 .game-score-display {
   width: 100%;
-  flex: 1; /* Take up available space */
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 0;
-  margin-bottom: 0;
+  transform: translateY(0vw); /* ADJUST THIS to move score up/down */
 }
 
 /* Main score (0, 15, 30, 40) */
@@ -90,8 +88,8 @@
 .game-set-indicators {
   position: absolute;
   bottom: 7vw;
-  left: 50%; /* Center horizontally */
-  transform: translateX(-50%); /* Center using transform */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   gap: 1.5vw;
   align-items: center;

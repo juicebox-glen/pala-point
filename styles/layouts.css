@@ -222,9 +222,9 @@
   left: 0;
   bottom: 0;
   width: 50%;
-  border-top: 0.8vw solid;
-  border-left: 0.8vw solid;
-  border-bottom: 0.8vw solid;
+  border-top: 1vw solid;
+  border-left: 1vw solid;
+  border-bottom: 1vw solid;
   border-right: none;
   pointer-events: none;
   z-index: 5;
@@ -236,9 +236,9 @@
   right: 0;
   bottom: 0;
   width: 50%;
-  border-top: 0.8vw solid;
-  border-right: 0.8vw solid;
-  border-bottom: 0.8vw solid;
+  border-top: 1vw solid;
+  border-right: 1vw solid;
+  border-bottom: 1vw solid;
   border-left: none;
   pointer-events: none;
   z-index: 5;
