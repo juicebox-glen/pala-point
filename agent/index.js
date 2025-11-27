@@ -79,19 +79,19 @@ async function executeUpdate(command) {
   
   try {
     console.log('📥 Pulling latest code...');
-    await execPromise('cd /home/pi/pala-point && git pull origin v3-clean');
+    await execPromise('cd /home/juicebox/pala-point && git pull origin v3-clean');
     
     console.log('📦 Installing dependencies...');
-    await execPromise('cd /home/pi/pala-point && npm install');
+    await execPromise('cd /home/juicebox/pala-point && npm install');
     
     console.log('🔨 Building app...');
-    await execPromise('cd /home/pi/pala-point && npm run build');
+    await execPromise('cd /home/juicebox/pala-point && npm run build');
     
     console.log('🔄 Restarting app...');
     await execPromise('pm2 restart pala-point');
     
     // Get new version
-    const { stdout } = await execPromise('cd /home/pi/pala-point && git rev-parse --short HEAD');
+    const { stdout } = await execPromise('cd /home/juicebox/pala-point && git rev-parse --short HEAD');
     const newVersion = stdout.trim();
     
     console.log(`✅ Update completed! New version: ${newVersion}`);
