@@ -248,7 +248,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
           </div>
 
           <div className={`game-set-indicators game-set-indicators-left`}>
-            {Array.from({ length: rules.bestOf === 1 ? 1 : 2 }).map((_, i) => (
+            {Array.from({ length: rules.setsTarget === 1 ? 1 : 2 }).map((_, i) => (
               <div
                 key={i}
                 className={`game-set-dot ${
@@ -272,7 +272,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
           </div>
 
           <div className={`game-set-indicators game-set-indicators-right`}>
-            {Array.from({ length: rules.bestOf === 1 ? 1 : 2 }).map((_, i) => (
+            {Array.from({ length: rules.setsTarget === 1 ? 1 : 2 }).map((_, i) => (
               <div
                 key={i}
                 className={`game-set-dot ${

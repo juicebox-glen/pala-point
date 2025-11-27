@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@stores/game-store";
-import type { DeuceRule, SetTieRule } from "@types/rules";
+import type { DeuceRule, SetTieRule } from "@/src/types/rules";
 
 type SetupStep = 'game-type' | 'deuce-rule' | 'sets' | 'tiebreak' | 'summary';
 type GameTypeSelection = 'quick-play' | 'custom';
@@ -35,26 +35,6 @@ export default function SetupPage() {
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const keyDownRef = useRef(false);
 
-  // Start hold timer
-  const startHold = useCallback(() => {
-    if (isHolding) return;
-    
-    setIsHolding(true);
-    setHoldProgress(0);
-    
-    const startTime = Date.now();
-
-    progressIntervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min((elapsed / HOLD_DURATION) * 100, 100);
-      setHoldProgress(progress);
-      
-      if (progress >= 100) {
-        completeHold();
-      }
-    }, 16); // ~60fps
-  }, [isHolding]);
-
   // Cancel hold timer
   const cancelHold = useCallback(() => {
     if (progressIntervalRef.current) {
@@ -64,13 +44,6 @@ export default function SetupPage() {
     setIsHolding(false);
     setHoldProgress(0);
   }, []);
-
-  // Complete hold action
-  const completeHold = useCallback(() => {
-    keyDownRef.current = false;
-    cancelHold();
-    handleConfirm();
-  }, [cancelHold]);
 
   // Toggle selection (Q/P keys)
   const handleToggle = useCallback(() => {
@@ -120,6 +93,33 @@ export default function SetupPage() {
       router.push('/game');
     }
   }, [step, gameType, customConfig, setGameRules, reset, router]);
+
+  // Complete hold action
+  const completeHold = useCallback(() => {
+    keyDownRef.current = false;
+    cancelHold();
+    handleConfirm();
+  }, [cancelHold, handleConfirm]);
+
+  // Start hold timer
+  const startHold = useCallback(() => {
+    if (isHolding) return;
+    
+    setIsHolding(true);
+    setHoldProgress(0);
+    
+    const startTime = Date.now();
+
+    progressIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min((elapsed / HOLD_DURATION) * 100, 100);
+      setHoldProgress(progress);
+      
+      if (progress >= 100) {
+        completeHold();
+      }
+    }, 16); // ~60fps
+  }, [isHolding, completeHold]);
 
   // Keyboard controls
   useEffect(() => {

@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import { initState, scorePoint as engineScorePoint, formatDisplay } from '@lib/engine/engine';
-import type { GameState, MatchRules, Team } from '@lib/engine/engine';
+import type { EngineState, Team } from '@lib/engine/engine';
+import type { MatchRules, DeuceRule, SetTieRule } from '../types/rules';
 
 interface GameStore {
-  state: GameState;
+  state: EngineState;
   rules: MatchRules;
-  history: GameState[];
+  history: EngineState[];
   sidesSwapped: boolean;
   
   scorePoint: (team: Team) => void;
@@ -13,13 +14,13 @@ interface GameStore {
   reset: (server?: Team) => void;
   swapSides: () => void;
   
-  setDeuceRule: (rule: 'advantage' | 'silver' | 'golden') => void;
+  setDeuceRule: (rule: DeuceRule) => void;
   setSetsTarget: (sets: 1 | 3) => void;
-  setTiebreakRule: (rule: 'tiebreak' | 'play-on') => void;
+  setTiebreakRule: (rule: SetTieRule) => void;
   setScoringSystem: (system: 'standard' | 'americano') => void;
   setGameRules: (config: {
-    deuceRule: 'advantage' | 'silver' | 'golden';
-    setTieRule: 'tiebreak' | 'play-on';
+    deuceRule: DeuceRule;
+    setTieRule: SetTieRule;
     setsTarget: 1 | 3;
   }) => void;
   
@@ -91,7 +92,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { rules } = get();
     if (rules.scoringSystem !== 'standard') return;
     
-    const newRules = { ...rules, setsTarget: sets };
+    // Convert setsTarget: 1 | 3 (number of sets) to 1 | 2 (best of format)
+    // 1 set = best of 1 (setsTarget: 1)
+    // 3 sets = best of 3 (setsTarget: 2, meaning need 2 sets to win)
+    const setsTarget: 1 | 2 = sets === 3 ? 2 : 1;
+    
+    const newRules = { ...rules, setsTarget };
     set({ 
       rules: newRules, 
       state: initState(newRules, 'A'),
@@ -140,11 +146,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setGameRules: (config) => {
+    // Convert setsTarget: 1 | 3 (number of sets) to 1 | 2 (best of format)
+    // 1 set = best of 1 (setsTarget: 1)
+    // 3 sets = best of 3 (setsTarget: 2, meaning need 2 sets to win)
+    const setsTarget: 1 | 2 = config.setsTarget === 3 ? 2 : 1;
+    
     const rules: MatchRules = {
       scoringSystem: 'standard',
       deuceRule: config.deuceRule,
       setTieRule: config.setTieRule,
-      setsTarget: config.setsTarget,
+      setsTarget,
       firstServer: 'random',
     };
     
