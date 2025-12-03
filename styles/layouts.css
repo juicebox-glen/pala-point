@@ -1,0 +1,312 @@
+/* ===================================================================
+   V3 LAYOUTS - Universal Layout Patterns
+   ================================================================ */
+
+/* ===== SCREEN WRAPPER (Universal Frame) ===== */
+/* Use this for ALL full-screen states - provides 0.5vw padding frame */
+.screen-wrapper {
+  position: absolute;
+  inset: 0;
+  padding: 0.5vw;
+  box-sizing: border-box;
+  background-color: #000000;
+}
+
+.screen-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ===================================================================
+   LAYOUT 1: FULL SCREEN (Single tile, no splits)
+   ================================================================ */
+.layout-full {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===================================================================
+   LAYOUT 2: 50/50 SPLIT (Horizontal or Vertical)
+   ================================================================ */
+
+/* 50/50 Vertical Split (top/bottom) */
+.layout-split-50-vertical {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.layout-split-50-vertical .tile {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 50/50 Horizontal Split (left/right) */
+.layout-split-50-horizontal {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+}
+
+.layout-split-50-horizontal .tile {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===================================================================
+   LAYOUT 3: 33/33/33 SPLIT (Thirds - Vertical)
+   ================================================================ */
+.layout-split-33-vertical {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.layout-split-33-vertical .tile {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===================================================================
+   LAYOUT 4: 2x2 GRID (Four equal tiles)
+   ================================================================ */
+.layout-grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+  gap: 0;
+}
+
+.layout-grid-2x2 .tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===================================================================
+   LAYOUT 5: ASYMMETRIC GRIDS
+   ================================================================ */
+
+/* Top: 1 long box | Bottom: 2 small boxes (50% top, 25%/25% bottom) */
+.layout-asymmetric-top-long {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+  gap: 0;
+}
+
+.layout-asymmetric-top-long .tile-long {
+  grid-column: 1 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.layout-asymmetric-top-long .tile-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Top: 2 small boxes | Bottom: 1 long box (25%/25% top, 50% bottom) */
+.layout-asymmetric-bottom-long {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 100%;
+  height: 100%;
+  gap: 0;
+}
+
+.layout-asymmetric-bottom-long .tile-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.layout-asymmetric-bottom-long .tile-long {
+  grid-column: 1 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===================================================================
+   TILE STATES (Selection, Colors, Borders)
+   ================================================================ */
+
+/* Default tile */
+.tile {
+  background-color: #2A2A2A;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+/* Selected state (green) */
+.tile.selected {
+  background-color: #04CA95;
+}
+
+/* Team colors */
+.tile.team-1 {
+  background-color: #04CA95;
+}
+
+.tile.team-2 {
+  background-color: #BB86FC;
+}
+
+/* Game scoreboard backgrounds - FIXED BY SIDE (don't swap with teams) */
+.tile.team-1-dark {
+  background-color: #121212; /* Left side - darker black */
+}
+
+.tile.team-2-dark {
+  background-color: #1E1E1F; /* Right side - slightly lighter black */
+}
+
+/* ===================================================================
+   BORDERED SCREENS (Court overlays with colored borders)
+   ================================================================ */
+.screen-bordered {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-image: url('/images/court.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Full border around screen */
+.screen-border {
+  position: absolute;
+  inset: 0;
+  border: 0.8vw solid;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Team-colored borders */
+.screen-border.team-1 {
+  border-color: #04CA95;
+}
+
+.screen-border.team-2 {
+  border-color: #BB86FC;
+}
+
+/* Half-screen serving borders (left or right side only) */
+.screen-border-serving-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 50%;
+  border-top: 1vw solid;
+  border-left: 1vw solid;
+  border-bottom: 1vw solid;
+  border-right: none;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.screen-border-serving-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 50%;
+  border-top: 1vw solid;
+  border-right: 1vw solid;
+  border-bottom: 1vw solid;
+  border-left: none;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ===================================================================
+   CENTERED CONTENT (For overlays, summaries, announcements)
+   ================================================================ */
+.content-centered {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 10;
+}
+
+.content-centered-horizontal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* ===================================================================
+   UTILITY CLASSES
+   ================================================================ */
+
+/* No gap between tiles */
+.no-gap {
+  gap: 0 !important;
+}
+
+/* Add gaps if needed */
+.gap-small {
+  gap: 0.5vw;
+}
+
+.gap-medium {
+  gap: 1vw;
+}
+
+/* Absolute positioning helpers */
+.absolute-fill {
+  position: absolute;
+  inset: 0;
+}
+
+/* Z-index layers */
+.layer-background {
+  z-index: 1;
+}
+
+.layer-border {
+  z-index: 5;
+}
+
+.layer-content {
+  z-index: 10;
+}
+
+.layer-overlay {
+  z-index: 20;
+}
+
+.layer-toast {
+  z-index: 100;
+}

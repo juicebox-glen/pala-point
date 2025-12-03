@@ -1,0 +1,82 @@
+/* V3 Screensaver Styles */
+
+.screensaver {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  
+  .screensaver-image-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .screensaver-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    animation: fadeIn 1s ease-in-out;
+  }
+  
+  .screensaver-indicator {
+    position: absolute;
+    bottom: var(--spacing-xl);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+  
+  .screensaver-dots {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: center;
+  }
+  
+  .screensaver-dot {
+    width: 1vw;
+    height: 1vw;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    transition: background-color 0.3s ease;
+  }
+  
+  .screensaver-dot.active {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .screensaver-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--font-size-medium);
+    text-align: center;
+    animation: pulse 2s infinite;
+    margin: 0;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 0.7;
+    }
+    50% {
+      opacity: 1;
+    }
+  }

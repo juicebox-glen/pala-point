@@ -1,0 +1,135 @@
+/* ===== SCORE ANIMATIONS ===== */
+@keyframes scoreFlash {
+    0%, 100% { 
+      transform: scale(1); 
+    }
+    50% { 
+      transform: scale(1.05); 
+    }
+  }
+  
+  .animate-score-flash {
+    animation: scoreFlash var(--duration-medium) ease-out;
+  }
+  
+  /* ===== FADE ANIMATIONS ===== */
+  @keyframes fadeIn {
+    from { 
+      opacity: 0; 
+      transform: translateY(2vw); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+  
+  @keyframes fadeOut {
+    from { 
+      opacity: 1; 
+    }
+    to { 
+      opacity: 0; 
+    }
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+  
+  .animate-fade-in-slow {
+    animation: fadeIn 0.7s ease-in;
+  }
+  
+  .animate-fade-in-slower {
+    animation: fadeIn 0.9s ease-in;
+  }
+  
+  .animate-fade-out {
+    animation: fadeOut var(--duration-fast) ease-out;
+  }
+  
+  /* ===== ROTATION ANIMATIONS ===== */
+  @keyframes rotate {
+    from { 
+      transform: translate(-50%, -50%) rotate(0deg); 
+    }
+    to { 
+      transform: translate(-50%, -50%) rotate(360deg); 
+    }
+  }
+  
+  @keyframes rotateSimple {
+    from { 
+      transform: rotate(0deg); 
+    }
+    to { 
+      transform: rotate(360deg); 
+    }
+  }
+  
+  .animate-rotate {
+    animation: rotate 3s linear infinite;
+  }
+  
+  .animate-rotate-simple {
+    animation: rotateSimple 3s linear infinite;
+  }
+  
+  /* ===== PULSE ANIMATIONS ===== */
+  @keyframes pulse {
+    0%, 100% { 
+      opacity: 0.7; 
+    }
+    50% { 
+      opacity: 1; 
+    }
+  }
+  
+  .animate-pulse {
+    animation: pulse 2s infinite;
+  }
+  
+  /* ===== SLIDE ANIMATIONS ===== */
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(2vw);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-slide-in {
+    animation: slideIn 0.5s ease-in;
+  }
+  
+  /* ===== SWAP ANIMATIONS ===== */
+  .swap-transition-left {
+    transition: transform var(--duration-slow) ease-in-out;
+  }
+  
+  .swap-transition-left.swapped {
+    transform: translateX(60vw);
+  }
+  
+  .swap-transition-right {
+    transition: transform var(--duration-slow) ease-in-out;
+  }
+  
+  .swap-transition-right.swapped {
+    transform: translateX(-60vw);
+  }
+  
+  /* ===== UTILITY ANIMATIONS ===== */
+  .transition-all {
+    transition: var(--transition-all);
+  }
+  
+  .transition-colors {
+    transition: background-color var(--duration-fast) ease,
+                color var(--duration-fast) ease,
+                border-color var(--duration-fast) ease;
+  }

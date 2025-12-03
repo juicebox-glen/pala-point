@@ -1,0 +1,135 @@
+/* V3 Design System - Color Variables */
+
+:root {
+  /* Primary Brand Colors */
+  --color-primary: #04CA95;        /* Teal green - main brand color */
+  --color-secondary: #BB86FC;      /* Purple - secondary brand color */
+  --color-accent: #BDF33F;         /* Bright green - accents only (ball, highlights) */
+  
+  /* Team Colors */
+  --color-team-1: #04CA95;         /* Team 1 - Teal green */
+  --color-team-2: #BB86FC;         /* Team 2 - Purple */
+  
+  /* Backgrounds */
+  --color-bg-primary: #121212;     /* Main background */
+  --color-bg-secondary: #1E1E1E;   /* Secondary background */
+  --color-bg-tertiary: #2A2A2A;    /* Tertiary background */
+  
+  /* Dark variations for split backgrounds */
+  --color-team-1-dark: #121212;    /* Team 1 side background (darker) */
+  --color-team-2-dark: #1E1E1F;    /* Team 2 side background (slightly lighter) */
+  
+  /* Team background colors for tiles */
+  --color-team-1-bg: var(--color-team-1);
+  --color-team-2-bg: var(--color-team-2);
+  
+  /* Text Colors */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B3B3B3;
+  --color-text-tertiary: #9CA3AF;
+  
+  /* Spacing Scale */
+  --spacing-xs: 0.5vw;
+  --spacing-sm: 1vw;
+  --spacing-md: 2vw;
+  --spacing-lg: 4vw;
+  --spacing-xl: 6vw;
+  
+  /* Border Radius */
+  --border-radius-sm: 0.5vw;
+  --border-radius-md: 0.8vw;
+  --border-radius-lg: 2vw;
+  
+  /* Font Sizes */
+  --font-size-small: 1.6vw;
+  --font-size-medium: 2vw;
+  --font-size-large: 2.5vw;
+  --font-size-xlarge: 3.5vw;
+  --font-size-huge: 6vw;
+  --font-size-massive: 26vw;
+  
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.6);
+  
+  /* Opacity Levels */
+  --opacity-disabled: 0.55;
+  --opacity-secondary: 0.7;
+  --opacity-active: 1;
+  
+  /* Letter Spacing */
+  --letter-spacing-tight: 0.05em;
+  --letter-spacing-normal: 0.1em;
+  --letter-spacing-wide: 0.2em;
+  
+  /* Ball Colors */
+  --color-ball: #D0FF14;           /* Bright green tennis ball */
+  --color-ball-border: #B8E000;    /* Darker green border */
+  
+  /* Sizes */
+  --size-ball: 3vw;                /* Large bouncing ball (phase 1) */
+  --size-ball-small: 2.5vw;        /* Small tennis ball (phase 2) */
+  --size-player-circle: 6.8vw;     /* Player position circles */
+  
+  /* Border Width */
+  --border-width: 0.8vw;
+  
+  /* Font Sizes - Screen Specific */
+  --font-size-screen-title: 3.5vw;
+  --font-size-instruction: 2vw;
+  
+  /* Z-Index Layers */
+  --z-background: 1;
+  --z-border: 5;
+  --z-content: 10;
+  --z-overlay: 20;
+  --z-toast: 100;
+  
+  /* Animation Durations */
+  --duration-fast: 0.2s;
+  --duration-medium: 0.6s;
+  --duration-slow: 2s;
+  
+  /* Font Family */
+  --font-family: 'Inter', system-ui, sans-serif;
+  
+  /* Additional Background Colors */
+  --color-bg-black: #000000;       /* Pure black for outer frame */
+  --color-bg-dark: #121212;        /* Main dark background */
+  --color-bg-medium: #2A2A2A;      /* Lighter dark background */
+  --color-selected: #04CA95;       /* Selected state background */
+  
+  /* Transition All */
+  --transition-all: all 0.3s ease;
+}
+
+/* Utility Classes */
+.color-primary {
+  color: var(--color-primary);
+}
+
+.color-secondary {
+  color: var(--color-secondary);
+}
+
+.color-accent {
+  color: var(--color-accent);
+}
+
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.bg-secondary {
+  background-color: var(--color-secondary);
+}
+
+.selected {
+  background-color: var(--color-primary);
+}

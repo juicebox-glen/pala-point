@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.1",
+  "clubId": "demo-club",
+  "courtId": "court-1",
+  "clubName": "Demo Padel Club",
+  "themeId": "high-contrast",
+  "quickPlayRules": {
+    "scoringMode": "standard",
+    "matchFormat": "sets",
+    "target": 1,
+    "deuceRule": "advantage",
+    "gamesPerSet": 6,
+    "setTieRule": "tiebreak",
+    "setTieAtGames": 6,
+    "tiebreakTo": 7
+  }
+}

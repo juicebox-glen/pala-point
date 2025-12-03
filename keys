@@ -1,0 +1,14 @@
+PROJECT_URL=https://pkmdjlrpmhfqbijuctal.supabase.co
+
+ANON_KEY=eyJhbGc... eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbWRqbHJwbWhmcWJpanVjdGFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MTcxNjEsImV4cCI6MjA3NjE5MzE2MX0.IQgjWG7uWHFVpVYXvAz1Tko9iPqK3bC8gLJNWQw0dcI
+
+SERVICE_ROLE_KEY=eyJhbGc... eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbWRqbHJwbWhmcWJpanVjdGFsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDYxNzE2MSwiZXhwIjoyMDc2MTkzMTYxfQ.BBu4ZS35CdEkPoArBJJoodYct3SslruenRCCa62V8RY
+
+# Test Court Token (for Pi testing)
+PI_TOKEN=0c45117050c1096ed22b01a8aa76459e009579828dc788ea4c29f8914573233b
+COURT_ID=4d37fe4a-438a-48ca-b42d-a5fdc4284e1e
+```
+
+**Add to `.gitignore`:**
+```
+.env.local
