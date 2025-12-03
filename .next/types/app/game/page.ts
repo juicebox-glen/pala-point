@@ -1,4 +1,4 @@
-// File: /Users/glennoble/Desktop/pala-point/app/game/page.tsx
+// File: /home/palapoint/pala-point/app/game/page.tsx
 import * as entry from '../../../../app/game/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

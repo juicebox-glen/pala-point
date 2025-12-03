@@ -3,6 +3,7 @@ try {
 } catch (e) {
   // dotenv not available, using system environment variables
 }
+
 const fliclib = require("./fliclibNodeJs")
 const FlicClient = fliclib.FlicClient
 const FlicConnectionChannel = fliclib.FlicConnectionChannel
@@ -14,21 +15,38 @@ const DEBUG = process.env.DEBUG === 'true';
 
 const client = new FlicClient(FLIC_HOST, FLIC_PORT)
 
-// Your button MAC addresses from the old system
+// Your button MAC addresses
 const buttonSides = {
-  "80:e4:da:7f:68:cd": "left",
-  "80:e4:da:7f:61:a9": "right", 
+  "90:88:a9:50:e4:41": "left",
+  "90:88:a9:50:e4:3d": "right", 
 }
 
 // Send keyboard commands to your Next.js app
 function sendKeyPress(key) {
   if (DEBUG) console.log(`Simulating key press: ${key}`)
   
-  // Use xdotool to send key to active window
   try {
     execSync(`DISPLAY=:0 xdotool key ${key}`)
   } catch (err) {
     console.error(`Error sending key ${key}:`, err.message)
+  }
+}
+
+// Send keyboard hold (for hold button functionality)
+function sendKeyHold(key, duration = 1500) {
+  if (DEBUG) console.log(`Simulating key hold: ${key} for ${duration}ms`)
+  
+  try {
+    execSync(`DISPLAY=:0 xdotool keydown ${key}`)
+    setTimeout(() => {
+      try {
+        execSync(`DISPLAY=:0 xdotool keyup ${key}`)
+      } catch (err) {
+        console.error(`Error releasing key ${key}:`, err.message)
+      }
+    }, duration)
+  } catch (err) {
+    console.error(`Error holding key ${key}:`, err.message)
   }
 }
 
@@ -39,11 +57,11 @@ function setupButton(bdAddr) {
     if (DEBUG) console.log(`Button ${bdAddr} not configured`)
     return
   }
-
+  
   if (DEBUG) console.log(`Setting up ${side} button: ${bdAddr}`)
   
   const channel = new FlicConnectionChannel(bdAddr)
-
+  
   channel.on("buttonSingleOrDoubleClick", (clickType) => {
     if (clickType === "ButtonSingleClick") {
       if (DEBUG) console.log(`${side} button: SINGLE CLICK`)
@@ -57,14 +75,14 @@ function setupButton(bdAddr) {
       sendKeyPress("a") // Undo
     }
   })
-
+  
   channel.on("buttonSingleOrDoubleClickOrHold", (clickType) => {
     if (clickType === "ButtonHold") {
       if (DEBUG) console.log(`${side} button: HOLD`)
-      sendKeyPress("h") // Reset
+      sendKeyHold("r", 1500) // Hold R key for 1.5 seconds
     }
   })
-
+  
   client.addConnectionChannel(channel)
 }
 

@@ -1,5 +1,5 @@
 const fetch = require('node-fetch');
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 
 // Validate required environment variables
 if (!process.env.SUPABASE_URL) {
@@ -82,6 +82,12 @@ async function executeCommand(command) {
       case 'restart':
         await executeRestart(command);
         break;
+      case 'stop_kiosk':
+        await executeStopKiosk(command);
+        break;
+      case 'start_kiosk':
+        await executeStartKiosk(command);
+        break;
       default:
         throw new Error(`Unknown command type: ${command.command_type}`);
     }
@@ -99,19 +105,19 @@ async function executeUpdate(command) {
   
   try {
     console.log('📥 Pulling latest code...');
-    await execPromise('cd /home/juicebox/pala-point && git pull origin v3-clean');
+    await execPromise('cd /home/palapoint/pala-point && git pull origin v3-clean');
     
     console.log('📦 Installing dependencies...');
-    await execPromise('cd /home/juicebox/pala-point && npm install');
+    await execPromise('cd /home/palapoint/pala-point && npm install');
     
     console.log('🔨 Building app...');
-    await execPromise('cd /home/juicebox/pala-point && npm run build');
+    await execPromise('cd /home/palapoint/pala-point && npm run build');
     
     console.log('🔄 Restarting app...');
-    await execPromise('pm2 restart pala-point');
+    await execPromise('pm2 restart palapoint-app');
     
     // Get new version
-    const { stdout } = await execPromise('cd /home/juicebox/pala-point && git rev-parse --short HEAD');
+    const { stdout } = await execPromise('cd /home/palapoint/pala-point && git rev-parse --short HEAD');
     const newVersion = stdout.trim();
     
     console.log(`✅ Update completed! New version: ${newVersion}`);
@@ -144,10 +150,36 @@ async function executeRestart(command) {
   const execPromise = util.promisify(exec);
   
   console.log('🔄 Restarting pala-point app...');
-  await execPromise('pm2 restart pala-point');
+  await execPromise('pm2 restart palapoint-app');
   
   console.log('✅ App restarted successfully');
   await reportCommandResult(command.id, 'completed', 'App restarted successfully');
+}
+
+// Execute stop kiosk command
+async function executeStopKiosk(command) {
+  const { exec } = require('child_process');
+  const util = require('util');
+  const execPromise = util.promisify(exec);
+  
+  console.log('🛑 Stopping kiosk mode...');
+  await execPromise('systemctl --user stop kiosk.service');
+  
+  console.log('✅ Kiosk stopped successfully');
+  await reportCommandResult(command.id, 'completed', 'Kiosk stopped successfully');
+}
+
+// Execute start kiosk command
+async function executeStartKiosk(command) {
+  const { exec } = require('child_process');
+  const util = require('util');
+  const execPromise = util.promisify(exec);
+  
+  console.log('▶️ Starting kiosk mode...');
+  await execPromise('systemctl --user start kiosk.service');
+  
+  console.log('✅ Kiosk started successfully');
+  await reportCommandResult(command.id, 'completed', 'Kiosk started successfully');
 }
 
 // Report command result
@@ -229,7 +261,7 @@ async function getCurrentVersion() {
     const { exec } = require('child_process');
     const util = require('util');
     const execPromise = util.promisify(exec);
-    const { stdout } = await execPromise('cd /home/juicebox/pala-point && git rev-parse --short HEAD');
+    const { stdout } = await execPromise('cd /home/palapoint/pala-point && git rev-parse --short HEAD');
     return stdout.trim();
   } catch (error) {
     return 'unknown';
