@@ -10,7 +10,7 @@ function useFlicWS() {
 
     const connect = () => {
       ws = new WebSocket('ws://localhost:4001');
-      ws.onopen = () => console.log('Connected to Flic bridge');
+      ws.onopen = () => { /* // console.log('Connected to Flic bridge'); */ }
       ws.onmessage = (e) => {
         try {
           const msg = JSON.parse(e.data);
@@ -23,13 +23,13 @@ function useFlicWS() {
           };
           const key = map[msg.cmd];
           if (key) {
-            console.log(`Flic command: ${msg.cmd} -> ${key}`);
+            // // console.log(`Flic command: ${msg.cmd} -> ${key}`);
             window.dispatchEvent(new KeyboardEvent('keydown', { key }));
           }
         } catch {}
       };
       ws.onclose = () => { 
-        // console.log('WS disconnected, retrying..'); // Comment out for now
+        // // console.log('WS disconnected, retrying..'); // Comment out for now
         retry = setTimeout(connect, 1000); 
       };
       ws.onerror  = () => { try { ws?.close(); } catch {} };
@@ -338,7 +338,7 @@ useEffect(() => () => cancelSwapTimer(), [cancelSwapTimer])
 
   const getPointSituation = useCallback(
     (state: GameState): { type: "set" | "match" | "tiebreak" | null; team: number | null } => {
-      console.log('getPointSituation called with games:', state.team1Games, '-', state.team2Games)
+      // console.log('getPointSituation called with games:', state.team1Games, '-', state.team2Games)
       if (!state.gameStarted || state.matchWinner) return { type: null, team: null }
 
       // Americano mode doesn't use tennis point situations
@@ -358,7 +358,7 @@ if (state.gameType === "casual") return { type: null, team: null }
           
           // In a 1-set game, set point = match point
           const setsToWin = state.customSets || 2
-          console.log('Point situation debug:', {
+          // console.log('Point situation debug:', {
             setPointTeam,
             setsToWin,
             customSets: state.customSets,
@@ -368,7 +368,7 @@ if (state.gameType === "casual") return { type: null, team: null }
           })
           
           if (setsToWin === 1) {
-            console.log('Should show MATCH POINT for 1-set game')
+            // console.log('Should show MATCH POINT for 1-set game')
             return { type: "match", team: setPointTeam }
           }
           
@@ -404,19 +404,19 @@ if (state.gameType === "casual") return { type: null, team: null }
                   : 0
 
                     // ADD THIS DEBUG BLOCK HERE
-  console.log('=== Point Situation Debug ===')
-  console.log('Games:', state.team1Games, '-', state.team2Games)
-  console.log('Point scores:', team1NumScore, '-', team2NumScore)
-  console.log('customTiebreak:', state.customTiebreak)
-  console.log('customSets:', state.customSets)
-  console.log('gameType:', state.gameType)
+  // console.log('=== Point Situation Debug ===')
+  // console.log('Games:', state.team1Games, '-', state.team2Games)
+  // console.log('Point scores:', team1NumScore, '-', team2NumScore)
+  // console.log('customTiebreak:', state.customTiebreak)
+  // console.log('customSets:', state.customSets)
+  // console.log('gameType:', state.gameType)
 
   if (team1NumScore >= 3 && team1NumScore > team2NumScore) {
-    console.log('Team 1 has winning point, checking conditions:')
-    console.log('- Play-on condition:', state.customTiebreak === 'play-on' && state.team1Games >= 6 && state.team1Games - state.team2Games === 1)
-    console.log('- customTiebreak is play-on:', state.customTiebreak === 'play-on')
-    console.log('- games >= 6:', state.team1Games >= 6)
-    console.log('- leading by 1:', state.team1Games - state.team2Games === 1)
+    // console.log('Team 1 has winning point, checking conditions:')
+    // console.log('- Play-on condition:', state.customTiebreak === 'play-on' && state.team1Games >= 6 && state.team1Games - state.team2Games === 1)
+    // console.log('- customTiebreak is play-on:', state.customTiebreak === 'play-on')
+    // console.log('- games >= 6:', state.team1Games >= 6)
+    // console.log('- leading by 1:', state.team1Games - state.team2Games === 1)
   }
 
   let setPointTeam: number | null = null
@@ -424,10 +424,10 @@ if (state.gameType === "casual") return { type: null, team: null }
   // FIRST: Check for play-on mode (works with any point mode)
   if (state.customTiebreak === 'play-on') {
     if (team1NumScore >= 3 && team1NumScore > team2NumScore && state.team1Games >= 6 && state.team1Games - state.team2Games === 1) {
-      console.log('🎾 PLAY-ON SET POINT DETECTED FOR TEAM 1!')
+      // console.log('🎾 PLAY-ON SET POINT DETECTED FOR TEAM 1!')
       setPointTeam = 1
     } else if (team2NumScore >= 3 && team2NumScore > team1NumScore && state.team2Games >= 6 && state.team2Games - state.team1Games === 1) {
-      console.log('🎾 PLAY-ON SET POINT DETECTED FOR TEAM 2!')
+      // console.log('🎾 PLAY-ON SET POINT DETECTED FOR TEAM 2!')
       setPointTeam = 2
     }
   }
@@ -563,8 +563,8 @@ if (state.gameType === "casual") return { type: null, team: null }
           newState.team1Score = tieBreakScore1.toString()
           newState.team2Score = tieBreakScore2.toString()
           newState.pointsPlayedInTieBreak++
-          console.log('Tiebreak points played:', newState.pointsPlayedInTieBreak)
-console.log('Should swap sides?', checkSideSwap(newState))
+          // console.log('Tiebreak points played:', newState.pointsPlayedInTieBreak)
+// console.log('Should swap sides?', checkSideSwap(newState))
           
           // Tiebreak serving: first point only, then every 2 points
           if (newState.pointsPlayedInTieBreak === 1 || 
@@ -605,20 +605,20 @@ if ((tieBreakScore1 >= 7 || tieBreakScore2 >= 7) && Math.abs(tieBreakScore1 - ti
 
   // Check for match winner
   const setsNeededToWin = newState.gameType === "casual" ? 1 : (newState.customSets || 2)
-  console.log('Sets needed to win:', setsNeededToWin, 'from customSets:', newState.customSets, 'gameType:', newState.gameType)
+  // console.log('Sets needed to win:', setsNeededToWin, 'from customSets:', newState.customSets, 'gameType:', newState.gameType)
   if (newState.team1Sets >= setsNeededToWin) {
     newState.matchWinner = 1
-    console.log("Match won by team 1")
+    // console.log("Match won by team 1")
     setShowStatsSlideshow(true)
   } else if (newState.team2Sets >= setsNeededToWin) {
     newState.matchWinner = 2
-    console.log("Match won by team 2")
+    // console.log("Match won by team 2")
     setShowStatsSlideshow(true)
   }
 
   if (!newState.matchWinner) {
     const tieBreakScore = `${tieBreakScore1 > tieBreakScore2 ? "7-6" : "6-7"} (${tieBreakScore1}-${tieBreakScore2})`
-    console.log('Complete tiebreak score string:', tieBreakScore);
+    // console.log('Complete tiebreak score string:', tieBreakScore);
 
     setSetWinData({
       team: winningTeam,
@@ -892,14 +892,14 @@ prev.gameType === "silver-point" && wasDeuceBeforePoint && prev.deuceCount === 0
               newState.team2Games = 0
 
               const setsNeededToWin = newState.gameType === "casual" ? 1 : (newState.customSets || 2)
-console.log('Regular set win - Sets needed:', setsNeededToWin, 'from customSets:', newState.customSets, 'gameType:', newState.gameType)
+// console.log('Regular set win - Sets needed:', setsNeededToWin, 'from customSets:', newState.customSets, 'gameType:', newState.gameType)
               if (newState.team1Sets >= setsNeededToWin) {
                 newState.matchWinner = 1
-                console.log("Match won by team 1") // Debug log
+                // console.log("Match won by team 1") // Debug log
                 setShowStatsSlideshow(true)
               } else if (newState.team2Sets >= setsNeededToWin) {
                 newState.matchWinner = 2
-                console.log("Match won by team 2") // Debug log
+                // console.log("Match won by team 2") // Debug log
                 setShowStatsSlideshow(true)
               }
 
@@ -1329,7 +1329,7 @@ useEffect(() => {
 // Keyboard event handler
 useEffect(() => {
   const handleKeyPress = (e: KeyboardEvent) => {
-    console.log('Key detected:', e.key, 'timestamp:', Date.now())
+    // console.log('Key detected:', e.key, 'timestamp:', Date.now())
     registerActivity()
 
     if (["q", "p", "a", "l", " ", "Enter", "r", "k"].includes(e.key.toLowerCase()) || e.key === " ") {

@@ -20,6 +20,8 @@ export default function SetupPage() {
   const router = useRouter();
   const reset = useGameStore((s) => s.reset);
   const setGameRules = useGameStore((s) => s.setGameRules);
+  const restoreSavedGame = useGameStore((s) => s.restoreSavedGame);
+  const clearSavedGame = useGameStore((s) => s.clearSavedGame);
 
   const [step, setStep] = useState<SetupStep>('game-type');
   const [gameType, setGameType] = useState<GameTypeSelection>('quick-play');
@@ -28,6 +30,7 @@ export default function SetupPage() {
     setsTarget: 1,
     setTieRule: 'tiebreak',
   });
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
 
   // Hold-to-select state
   const [holdProgress, setHoldProgress] = useState(0);
@@ -121,8 +124,10 @@ export default function SetupPage() {
     }, 16); // ~60fps
   }, [isHolding, completeHold]);
 
-  // Keyboard controls
+  // Keyboard controls (disabled when dialog is showing)
   useEffect(() => {
+    if (showResumeDialog) return; // Don't handle keys when dialog is showing
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
       
@@ -152,7 +157,28 @@ export default function SetupPage() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [handleToggle, startHold, cancelHold]);
+  }, [handleToggle, startHold, cancelHold, showResumeDialog]);
+
+  // Check for saved game on mount
+  useEffect(() => {
+    const hasSavedGame = restoreSavedGame();
+    if (hasSavedGame) {
+      setShowResumeDialog(true);
+    }
+  }, [restoreSavedGame]);
+
+  // Handle resume dialog response
+  const handleResumeYes = useCallback(() => {
+    setShowResumeDialog(false);
+    router.push('/game');
+  }, [router]);
+
+  const handleResumeNo = useCallback(() => {
+    setShowResumeDialog(false);
+    clearSavedGame();
+    // Reset to initial state
+    reset('A');
+  }, [clearSavedGame, reset]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -165,6 +191,12 @@ export default function SetupPage() {
 
   return (
     <div className="screen-wrapper">
+      {showResumeDialog && (
+        <ResumeGameDialog
+          onYes={handleResumeYes}
+          onNo={handleResumeNo}
+        />
+      )}
       {step === 'game-type' && (
         <GameTypeScreen 
           selected={gameType}
@@ -200,6 +232,109 @@ export default function SetupPage() {
           holdProgress={holdProgress}
         />
       )}
+    </div>
+  );
+}
+
+function ResumeGameDialog({ 
+  onYes, 
+  onNo 
+}: { 
+  onYes: () => void;
+  onNo: () => void;
+}) {
+  // Handle keyboard input for dialog
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (key === 'q' || key === 'p') {
+        // Q = Yes, P = No (or vice versa, but let's use Q for Yes)
+        onYes();
+      } else if (key === 'a') {
+        // A = No (alternative)
+        onNo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onYes, onNo]);
+
+  return (
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+      }}
+    >
+      <div 
+        style={{
+          backgroundColor: 'var(--color-bg-primary, #1a1a1a)',
+          padding: '3rem',
+          borderRadius: '8px',
+          textAlign: 'center',
+          maxWidth: '600px',
+          border: '2px solid var(--color-team-1, #00ff88)',
+        }}
+      >
+        <div 
+          style={{
+            fontSize: '2rem',
+            marginBottom: '2rem',
+            color: 'var(--color-text-primary, #ffffff)',
+            fontWeight: 'bold',
+          }}
+        >
+          Resume previous game?
+        </div>
+        <div 
+          style={{
+            display: 'flex',
+            gap: '2rem',
+            justifyContent: 'center',
+            marginTop: '2rem',
+          }}
+        >
+          <button
+            onClick={onYes}
+            style={{
+              padding: '1rem 2rem',
+              fontSize: '1.2rem',
+              backgroundColor: 'var(--color-team-1, #00ff88)',
+              color: '#000',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+            }}
+          >
+            YES (Q)
+          </button>
+          <button
+            onClick={onNo}
+            style={{
+              padding: '1rem 2rem',
+              fontSize: '1.2rem',
+              backgroundColor: 'var(--color-team-2, #a855f7)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+            }}
+          >
+            NO (A)
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

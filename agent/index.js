@@ -1,6 +1,22 @@
 const fetch = require('node-fetch');
 require('dotenv').config();
 
+// Validate required environment variables
+if (!process.env.SUPABASE_URL) {
+  console.error('ERROR: SUPABASE_URL is missing in .env file');
+  process.exit(1);
+}
+
+if (!process.env.SUPABASE_ANON_KEY) {
+  console.error('ERROR: SUPABASE_ANON_KEY is missing in .env file');
+  process.exit(1);
+}
+
+if (!process.env.PI_TOKEN || process.env.PI_TOKEN.length !== 64) {
+  console.error('ERROR: Invalid PI_TOKEN in .env file. Must be exactly 64 characters.');
+  process.exit(1);
+}
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const PI_TOKEN = process.env.PI_TOKEN;
@@ -25,6 +41,10 @@ async function sendHeartbeat() {
         current_version: await getCurrentVersion()
       })
     });
+
+    if (!response.ok) {
+      throw new Error(`Heartbeat request failed with status ${response.status}: ${response.statusText}`);
+    }
 
     const data = await response.json();
     
@@ -153,6 +173,10 @@ async function reportCommandResult(commandId, status, message, currentVersion = 
       body: JSON.stringify(body)
     });
 
+    if (!response.ok) {
+      throw new Error(`Command result request failed with status ${response.status}: ${response.statusText}`);
+    }
+
     const data = await response.json();
     
     if (data.success) {
@@ -205,7 +229,7 @@ async function getCurrentVersion() {
     const { exec } = require('child_process');
     const util = require('util');
     const execPromise = util.promisify(exec);
-    const { stdout } = await execPromise('cd /home/pi/pala-point && git rev-parse --short HEAD');
+    const { stdout } = await execPromise('cd /home/juicebox/pala-point && git rev-parse --short HEAD');
     return stdout.trim();
   } catch (error) {
     return 'unknown';

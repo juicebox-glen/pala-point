@@ -46,8 +46,6 @@ export default function ServerAnnouncement({ servingTeam, onComplete }: ServerAn
 
     // Switch to phase 2 after 3 seconds - STOP ANIMATION FIRST
     phaseTimerRef.current = setTimeout(() => {
-      console.log('Stopping animation and switching to phase 2');
-      
       // CRITICAL: Cancel animation BEFORE state update
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
@@ -76,15 +74,11 @@ export default function ServerAnnouncement({ servingTeam, onComplete }: ServerAn
   useEffect(() => {
     if (phase !== 2) return;
 
-    console.log('Phase 2 started');
-
     completeTimerRef.current = setTimeout(() => {
-      console.log('Auto-completing announcement');
       onComplete();
     }, 8000);
 
     const handleKeyPress = () => {
-      console.log('Key pressed, completing announcement');
       onComplete();
     };
 
