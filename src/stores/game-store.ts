@@ -4,7 +4,7 @@ import type { EngineState, Team } from '@lib/engine/engine';
 import type { MatchRules, DeuceRule, SetTieRule } from '../types/rules';
 
 const STORAGE_KEY = 'palapoint_saved_game';
-const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+const MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 interface SavedGameState {
   state: EngineState;

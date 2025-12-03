@@ -243,22 +243,88 @@ function ResumeGameDialog({
   onYes: () => void;
   onNo: () => void;
 }) {
+  const [selected, setSelected] = useState<'yes' | 'no'>('yes');
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
+  const keyDownRef = useRef(false);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cancel hold timer
+  const cancelHold = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    setIsHolding(false);
+    setHoldProgress(0);
+  }, []);
+
+  // Complete hold action
+  const completeHold = useCallback(() => {
+    keyDownRef.current = false;
+    cancelHold();
+    if (selected === 'yes') {
+      onYes();
+    } else {
+      onNo();
+    }
+  }, [selected, onYes, onNo, cancelHold]);
+
+  // Start hold timer
+  const startHold = useCallback(() => {
+    if (isHolding) return;
+    
+    setIsHolding(true);
+    setHoldProgress(0);
+    
+    const startTime = Date.now();
+
+    progressIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min((elapsed / HOLD_DURATION) * 100, 100);
+      setHoldProgress(progress);
+      
+      if (progress >= 100) {
+        completeHold();
+      }
+    }, 16); // ~60fps
+  }, [isHolding, completeHold]);
+
   // Handle keyboard input for dialog
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
+      
       if (key === 'q' || key === 'p') {
-        // Q = Yes, P = No (or vice versa, but let's use Q for Yes)
-        onYes();
-      } else if (key === 'a') {
-        // A = No (alternative)
-        onNo();
+        // Toggle between yes and no
+        setSelected(prev => prev === 'yes' ? 'no' : 'yes');
+        cancelHold();
+      } else if (key === 'r') {
+        if (!keyDownRef.current) {
+          keyDownRef.current = true;
+          startHold();
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      
+      if (key === 'r') {
+        keyDownRef.current = false;
+        cancelHold();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onYes, onNo]);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      cancelHold();
+    };
+  }, [startHold, cancelHold]);
 
   return (
     <div 
@@ -303,36 +369,92 @@ function ResumeGameDialog({
             marginTop: '2rem',
           }}
         >
-          <button
-            onClick={onYes}
-            style={{
-              padding: '1rem 2rem',
-              fontSize: '1.2rem',
-              backgroundColor: 'var(--color-team-1, #00ff88)',
-              color: '#000',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-            }}
-          >
-            YES (Q)
-          </button>
-          <button
-            onClick={onNo}
-            style={{
-              padding: '1rem 2rem',
-              fontSize: '1.2rem',
-              backgroundColor: 'var(--color-team-2, #a855f7)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-            }}
-          >
-            NO (A)
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={onYes}
+              style={{
+                padding: '1rem 2rem',
+                fontSize: '1.2rem',
+                backgroundColor: selected === 'yes' 
+                  ? 'var(--color-team-1, #00ff88)' 
+                  : 'rgba(0, 255, 136, 0.3)',
+                color: selected === 'yes' ? '#000' : '#888',
+                border: selected === 'yes' 
+                  ? '2px solid var(--color-team-1, #00ff88)' 
+                  : '2px solid rgba(0, 255, 136, 0.5)',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                opacity: selected === 'yes' ? 1 : 0.6,
+                transition: 'all 0.2s',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              YES
+              {selected === 'yes' && isHolding && (
+                <div 
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    height: '4px',
+                    width: `${holdProgress}%`,
+                    backgroundColor: '#000',
+                    transition: 'width 0.1s',
+                  }}
+                />
+              )}
+            </button>
+          </div>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={onNo}
+              style={{
+                padding: '1rem 2rem',
+                fontSize: '1.2rem',
+                backgroundColor: selected === 'no' 
+                  ? 'var(--color-team-2, #a855f7)' 
+                  : 'rgba(168, 85, 247, 0.3)',
+                color: selected === 'no' ? '#fff' : '#888',
+                border: selected === 'no' 
+                  ? '2px solid var(--color-team-2, #a855f7)' 
+                  : '2px solid rgba(168, 85, 247, 0.5)',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                opacity: selected === 'no' ? 1 : 0.6,
+                transition: 'all 0.2s',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              NO
+              {selected === 'no' && isHolding && (
+                <div 
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    height: '4px',
+                    width: `${holdProgress}%`,
+                    backgroundColor: '#fff',
+                    transition: 'width 0.1s',
+                  }}
+                />
+              )}
+            </button>
+          </div>
+        </div>
+        <div 
+          style={{
+            marginTop: '1rem',
+            fontSize: '0.9rem',
+            color: 'var(--color-text-primary, #ffffff)',
+            opacity: 0.7,
+          }}
+        >
+          Q/P to toggle • Hold R to confirm
         </div>
       </div>
     </div>
