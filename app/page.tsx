@@ -126,9 +126,10 @@ export default function SetupPage() {
 
   // Keyboard controls (disabled when dialog is showing)
   useEffect(() => {
-    if (showResumeDialog) return; // Don't handle keys when dialog is showing
-
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle if dialog is NOT showing
+      if (showResumeDialog) return;
+      
       const key = e.key.toLowerCase();
       
       if (key === 'q' || key === 'p') {
@@ -142,6 +143,9 @@ export default function SetupPage() {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      // Only handle if dialog is NOT showing
+      if (showResumeDialog) return;
+      
       const key = e.key.toLowerCase();
       
       if (key === 'r') {
@@ -150,9 +154,11 @@ export default function SetupPage() {
       }
     };
 
+    // ALWAYS add listeners
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
+    // ALWAYS cleanup
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
@@ -249,13 +255,22 @@ function ResumeGameDialog({
   const keyDownRef = useRef(false);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const holdCompletedRef = useRef(false);
+  const isHoldingRef = useRef(false);
 
   // Cancel hold timer
   const cancelHold = useCallback(() => {
+    console.log('[ResumeDialog] cancelHold called', {
+      hasInterval: !!progressIntervalRef.current,
+      keyDownRef: keyDownRef.current,
+      holdCompleted: holdCompletedRef.current,
+      isHoldingRef: isHoldingRef.current,
+      stack: new Error().stack
+    });
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
       progressIntervalRef.current = null;
     }
+    isHoldingRef.current = false;
     setIsHolding(false);
     setHoldProgress(0);
     holdCompletedRef.current = false;
@@ -263,6 +278,11 @@ function ResumeGameDialog({
 
   // Complete hold action
   const completeHold = useCallback(() => {
+    console.log('[ResumeDialog] completeHold called', {
+      selected,
+      keyDownRef: keyDownRef.current,
+      holdCompleted: holdCompletedRef.current
+    });
     keyDownRef.current = false;
     cancelHold();
     if (selected === 'yes') {
@@ -274,13 +294,23 @@ function ResumeGameDialog({
 
   // Start hold timer
   const startHold = useCallback(() => {
-    if (isHolding) return;
+    console.log('[ResumeDialog] startHold called', {
+      isHoldingRef: isHoldingRef.current,
+      keyDownRef: keyDownRef.current,
+      hasInterval: !!progressIntervalRef.current
+    });
+    if (isHoldingRef.current) {
+      console.log('[ResumeDialog] startHold blocked - already holding');
+      return;
+    }
     
+    isHoldingRef.current = true;
     setIsHolding(true);
     setHoldProgress(0);
     holdCompletedRef.current = false;
     
     const startTime = Date.now();
+    console.log('[ResumeDialog] Starting hold timer, target duration:', HOLD_DURATION);
 
     progressIntervalRef.current = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -288,38 +318,62 @@ function ResumeGameDialog({
       setHoldProgress(progress);
       
       if (progress >= 100) {
+        console.log('[ResumeDialog] Hold completed, progress:', progress);
         holdCompletedRef.current = true;
         completeHold();
       }
     }, 16); // ~60fps
-  }, [isHolding, completeHold]);
+  }, [completeHold]);
 
   // Handle keyboard input for dialog
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
+      console.log('[ResumeDialog] keydown:', key, {
+        repeat: e.repeat,
+        keyDownRef: keyDownRef.current,
+        isHoldingRef: isHoldingRef.current,
+        holdCompleted: holdCompletedRef.current
+      });
       
       if (key === 'q' || key === 'p') {
         // Toggle between yes and no
+        console.log('[ResumeDialog] Toggling selection');
         setSelected(prev => prev === 'yes' ? 'no' : 'yes');
         cancelHold();
       } else if (key === 'r') {
+        // Process first keydown (even if marked as repeat by xdotool/browser)
+        // Ignore subsequent repeats only if we've already started the hold
+        if (e.repeat && keyDownRef.current) {
+          console.log('[ResumeDialog] R keydown ignored - keyboard repeat (already holding)');
+          return;
+        }
         if (!keyDownRef.current) {
+          console.log('[ResumeDialog] R keydown - starting hold', {
+            isRepeat: e.repeat,
+            keyDownRef: keyDownRef.current
+          });
           keyDownRef.current = true;
           startHold();
+        } else {
+          console.log('[ResumeDialog] R keydown ignored - already down');
         }
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
+      console.log('[ResumeDialog] keyup:', key, {
+        keyDownRef: keyDownRef.current,
+        isHoldingRef: isHoldingRef.current,
+        holdCompleted: holdCompletedRef.current,
+        hasInterval: !!progressIntervalRef.current
+      });
       
       if (key === 'r') {
         keyDownRef.current = false;
-        // Only cancel if hold hasn't completed yet
-        if (!holdCompletedRef.current) {
-          cancelHold();
-        }
+        // Always cancel on keyup (matching working pattern)
+        cancelHold();
       }
     };
 
