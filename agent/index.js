@@ -38,7 +38,10 @@ async function sendHeartbeat() {
         ip_address: getLocalIP(),
         cpu_temp: await getCPUTemp(),
         disk_usage_percent: await getDiskUsage(),
-        current_version: await getCurrentVersion()
+        current_version: await getCurrentVersion(),
+        court_state: await getCourtState(),
+        current_score: await getCurrentScore(),
+        game_mode: await getGameMode()
       })
     });
 
@@ -265,6 +268,39 @@ async function getCurrentVersion() {
     return stdout.trim();
   } catch (error) {
     return 'unknown';
+  }
+}
+
+async function getCourtState() {
+  try {
+    const fs = require('fs').promises;
+    const state = await fs.readFile('/tmp/palapoint-state.json', 'utf8');
+    const parsed = JSON.parse(state);
+    return parsed.court_state || 'idle';
+  } catch (error) {
+    return 'idle';
+  }
+}
+
+async function getCurrentScore() {
+  try {
+    const fs = require('fs').promises;
+    const state = await fs.readFile('/tmp/palapoint-state.json', 'utf8');
+    const parsed = JSON.parse(state);
+    return parsed.current_score || null;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function getGameMode() {
+  try {
+    const fs = require('fs').promises;
+    const state = await fs.readFile('/tmp/palapoint-state.json', 'utf8');
+    const parsed = JSON.parse(state);
+    return parsed.game_mode || null;
+  } catch (error) {
+    return null;
   }
 }
 
