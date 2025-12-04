@@ -189,11 +189,13 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   useEffect(() => {
     if (state.finished) return; // Handled by finished state effect
     
-    const gameMode = rules.scoringSystem === 'americano' 
-      ? 'americano' 
-      : rules.setsTarget === 1 
-        ? '1-set' 
-        : '3-set';
+    // Detect if it's Quick Play (default config: 1 set, advantage, tiebreak)
+    const isQuickPlay = rules.scoringSystem === 'standard' &&
+      rules.setsTarget === 1 &&
+      rules.deuceRule === 'advantage' &&
+      rules.setTieRule === 'tiebreak';
+    
+    const gameMode: 'quick-play' | 'custom' = isQuickPlay ? 'quick-play' : 'custom';
     
     writeGameState({
       court_state: 'in_play',
@@ -203,16 +205,18 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
       },
       game_mode: gameMode
     });
-  }, [view.games.A, view.games.B, state.finished, rules.scoringSystem, rules.setsTarget]);
+  }, [view.games.A, view.games.B, state.finished, rules.scoringSystem, rules.setsTarget, rules.deuceRule, rules.setTieRule]);
 
   // Write finished state when game ends
   useEffect(() => {
     if (state.finished && state.finished.winner) {
-      const gameMode = rules.scoringSystem === 'americano' 
-        ? 'americano' 
-        : rules.setsTarget === 1 
-          ? '1-set' 
-          : '3-set';
+      // Detect if it's Quick Play (default config: 1 set, advantage, tiebreak)
+      const isQuickPlay = rules.scoringSystem === 'standard' &&
+        rules.setsTarget === 1 &&
+        rules.deuceRule === 'advantage' &&
+        rules.setTieRule === 'tiebreak';
+      
+      const gameMode: 'quick-play' | 'custom' = isQuickPlay ? 'quick-play' : 'custom';
       
       const finalScore = {
         teamA: view.games.A,
@@ -225,7 +229,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
         game_mode: gameMode
       });
     }
-  }, [state.finished, view.games.A, view.games.B, rules.scoringSystem, rules.setsTarget]);
+  }, [state.finished, view.games.A, view.games.B, rules.scoringSystem, rules.setsTarget, rules.deuceRule, rules.setTieRule]);
 
   // Show screensaver if idle
   if (showScreensaver) {

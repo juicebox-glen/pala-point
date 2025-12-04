@@ -23,11 +23,13 @@ export default function GamePage() {
   // Write state when game phase changes to playing
   useEffect(() => {
     if (phase === 'playing') {
-      const gameMode = rules.scoringSystem === 'americano' 
-        ? 'americano' 
-        : rules.setsTarget === 1 
-          ? '1-set' 
-          : '3-set';
+      // Detect if it's Quick Play (default config: 1 set, advantage, tiebreak)
+      const isQuickPlay = rules.scoringSystem === 'standard' &&
+        rules.setsTarget === 1 &&
+        rules.deuceRule === 'advantage' &&
+        rules.setTieRule === 'tiebreak';
+      
+      const gameMode: 'quick-play' | 'custom' = isQuickPlay ? 'quick-play' : 'custom';
       
       writeGameState({
         court_state: 'in_play',
@@ -35,7 +37,7 @@ export default function GamePage() {
         game_mode: gameMode
       });
     }
-  }, [phase, rules.scoringSystem, rules.setsTarget]);
+  }, [phase, rules.scoringSystem, rules.setsTarget, rules.deuceRule, rules.setTieRule]);
 
   const handleReset = () => {
     reset();

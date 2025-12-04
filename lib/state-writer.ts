@@ -1,9 +1,10 @@
 export type CourtState = 'idle' | 'mode_select' | 'in_play' | 'finished';
+export type GameMode = 'quick-play' | 'custom';
 
 interface GameState {
   court_state: CourtState;
   current_score: { teamA: number; teamB: number } | null;
-  game_mode: string | null;
+  game_mode: GameMode | null;
 }
 
 export async function writeGameState(state: GameState): Promise<void> {

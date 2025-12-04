@@ -102,7 +102,7 @@ export default function SetupPage() {
       writeGameState({
         court_state: 'in_play',
         current_score: { teamA: 0, teamB: 0 },
-        game_mode: `custom-${customConfig.setsTarget}set-${customConfig.deuceRule}`
+        game_mode: 'custom'
       });
       router.push('/game');
     }
