@@ -248,6 +248,7 @@ function ResumeGameDialog({
   const [isHolding, setIsHolding] = useState(false);
   const keyDownRef = useRef(false);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const holdCompletedRef = useRef(false);
 
   // Cancel hold timer
   const cancelHold = useCallback(() => {
@@ -257,6 +258,7 @@ function ResumeGameDialog({
     }
     setIsHolding(false);
     setHoldProgress(0);
+    holdCompletedRef.current = false;
   }, []);
 
   // Complete hold action
@@ -276,6 +278,7 @@ function ResumeGameDialog({
     
     setIsHolding(true);
     setHoldProgress(0);
+    holdCompletedRef.current = false;
     
     const startTime = Date.now();
 
@@ -285,6 +288,7 @@ function ResumeGameDialog({
       setHoldProgress(progress);
       
       if (progress >= 100) {
+        holdCompletedRef.current = true;
         completeHold();
       }
     }, 16); // ~60fps
@@ -312,7 +316,10 @@ function ResumeGameDialog({
       
       if (key === 'r') {
         keyDownRef.current = false;
-        cancelHold();
+        // Only cancel if hold hasn't completed yet
+        if (!holdCompletedRef.current) {
+          cancelHold();
+        }
       }
     };
 
