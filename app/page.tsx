@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@stores/game-store";
 import type { DeuceRule, SetTieRule } from "@/src/types/rules";
+import { writeGameState } from "@/lib/state-writer";
 
 type SetupStep = 'game-type' | 'deuce-rule' | 'sets' | 'tiebreak' | 'summary';
 type GameTypeSelection = 'quick-play' | 'custom';
@@ -78,6 +79,11 @@ export default function SetupPage() {
           setsTarget: 1
         });
         reset('A');
+        writeGameState({
+          court_state: 'in_play',
+          current_score: { teamA: 0, teamB: 0 },
+          game_mode: 'quick-play'
+        });
         router.push('/game');
       } else {
         // Custom: Go to deuce rule selection
@@ -93,6 +99,11 @@ export default function SetupPage() {
       // Apply custom config and start game
       setGameRules(customConfig);
       reset('A');
+      writeGameState({
+        court_state: 'in_play',
+        current_score: { teamA: 0, teamB: 0 },
+        game_mode: `custom-${customConfig.setsTarget}set-${customConfig.deuceRule}`
+      });
       router.push('/game');
     }
   }, [step, gameType, customConfig, setGameRules, reset, router]);
@@ -165,6 +176,17 @@ export default function SetupPage() {
     };
   }, [handleToggle, startHold, cancelHold, showResumeDialog]);
 
+  // Write state when on setup screen
+  useEffect(() => {
+    if (step === 'game-type') {
+      writeGameState({
+        court_state: 'mode_select',
+        current_score: null,
+        game_mode: null
+      });
+    }
+  }, [step]);
+
   // Check for saved game on mount
   useEffect(() => {
     const hasSavedGame = restoreSavedGame();
@@ -176,6 +198,7 @@ export default function SetupPage() {
   // Handle resume dialog response
   const handleResumeYes = useCallback(() => {
     setShowResumeDialog(false);
+    // Game state will be updated by GameScoreboard when it loads
     router.push('/game');
   }, [router]);
 
@@ -184,6 +207,11 @@ export default function SetupPage() {
     clearSavedGame();
     // Reset to initial state
     reset('A');
+    writeGameState({
+      court_state: 'idle',
+      current_score: null,
+      game_mode: null
+    });
   }, [clearSavedGame, reset]);
 
   // Cleanup on unmount

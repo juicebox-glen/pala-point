@@ -8,6 +8,7 @@ import SideSwap from "./SideSwap";
 import SetWin from "./SetWin";
 import MatchWin from "./MatchWin";
 import Screensaver from "./Screensaver";
+import { writeGameState } from "@/lib/state-writer";
 
 interface GameScoreboardProps {
   onReset: () => void;
@@ -183,6 +184,48 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
     prevTotalGamesRef.current = 0;
     prevTiebreakPointsRef.current = 0;
   };
+
+  // Write game state when score changes
+  useEffect(() => {
+    if (state.finished) return; // Handled by finished state effect
+    
+    const gameMode = rules.scoringSystem === 'americano' 
+      ? 'americano' 
+      : rules.setsTarget === 1 
+        ? '1-set' 
+        : '3-set';
+    
+    writeGameState({
+      court_state: 'in_play',
+      current_score: {
+        teamA: view.games.A,
+        teamB: view.games.B
+      },
+      game_mode: gameMode
+    });
+  }, [view.games.A, view.games.B, state.finished, rules.scoringSystem, rules.setsTarget]);
+
+  // Write finished state when game ends
+  useEffect(() => {
+    if (state.finished && state.finished.winner) {
+      const gameMode = rules.scoringSystem === 'americano' 
+        ? 'americano' 
+        : rules.setsTarget === 1 
+          ? '1-set' 
+          : '3-set';
+      
+      const finalScore = {
+        teamA: view.games.A,
+        teamB: view.games.B
+      };
+      
+      writeGameState({
+        court_state: 'finished',
+        current_score: finalScore,
+        game_mode: gameMode
+      });
+    }
+  }, [state.finished, view.games.A, view.games.B, rules.scoringSystem, rules.setsTarget]);
 
   // Show screensaver if idle
   if (showScreensaver) {
