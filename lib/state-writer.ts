@@ -8,8 +8,7 @@ interface GameState {
 
 export async function writeGameState(state: GameState): Promise<void> {
   try {
-    // Only write in production (on Pi)
-    if (process.env.NODE_ENV !== 'production') return;
+    
     
     // Call API route to write state file
     await fetch('/api/write-state', {
