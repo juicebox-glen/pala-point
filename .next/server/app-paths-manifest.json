@@ -1,14 +1,5 @@
 {
   "/api/write-state/route": "app/api/write-state/route.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/dev/page": "app/dev/page.js",
-  "/dev/match-win/page": "app/dev/match-win/page.js",
-  "/dev/screensaver/page": "app/dev/screensaver/page.js",
-  "/dev/server/page": "app/dev/server/page.js",
   "/game/page": "app/game/page.js",
-  "/page": "app/page.js",
-  "/dev/set-win/page": "app/dev/set-win/page.js",
-  "/dev/setup/page": "app/dev/setup/page.js",
-  "/dev/side-swap/page": "app/dev/side-swap/page.js",
-  "/dev/game/page": "app/dev/game/page.js"
+  "/page": "app/page.js"
 }

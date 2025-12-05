@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useGameStore } from "@stores/game-store";
 import type { DeuceRule, SetTieRule } from "@/src/types/rules";
 import { writeGameState } from "@/lib/state-writer";
+import Screensaver from "./components/Screensaver";
 
 type SetupStep = 'game-type' | 'deuce-rule' | 'sets' | 'tiebreak' | 'summary';
 type GameTypeSelection = 'quick-play' | 'custom';
@@ -32,6 +33,11 @@ export default function SetupPage() {
     setTieRule: 'tiebreak',
   });
   const [showResumeDialog, setShowResumeDialog] = useState(false);
+
+  // Screensaver state
+  const [showScreensaver, setShowScreensaver] = useState(false);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Hold-to-select state
   const [holdProgress, setHoldProgress] = useState(0);
@@ -78,7 +84,7 @@ export default function SetupPage() {
           setTieRule: 'tiebreak',
           setsTarget: 1
         });
-        reset('A');
+        reset();
         writeGameState({
           court_state: 'in_play',
           current_score: { teamA: 0, teamB: 0 },
@@ -98,7 +104,7 @@ export default function SetupPage() {
     } else if (step === 'summary') {
       // Apply custom config and start game
       setGameRules(customConfig);
-      reset('A');
+      reset();
       writeGameState({
         court_state: 'in_play',
         current_score: { teamA: 0, teamB: 0 },
@@ -135,9 +141,37 @@ export default function SetupPage() {
     }, 16); // ~60fps
   }, [isHolding, completeHold]);
 
+  // Register activity for screensaver
+  const registerActivity = useCallback(() => {
+    setLastActivity(Date.now());
+    if (showScreensaver) {
+      setShowScreensaver(false);
+    }
+  }, [showScreensaver]);
+
+  // Idle detection for screensaver (30 seconds of inactivity)
+  useEffect(() => {
+    const checkIdle = () => {
+      const idleTime = Date.now() - lastActivity;
+      if (idleTime > 30000) { // 30 seconds
+        setShowScreensaver(true);
+      }
+    };
+
+    idleTimerRef.current = setInterval(checkIdle, 1000);
+
+    return () => {
+      if (idleTimerRef.current) {
+        clearInterval(idleTimerRef.current);
+      }
+    };
+  }, [lastActivity]);
+
   // Keyboard controls (disabled when dialog is showing)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      registerActivity();
+      
       // Only handle if dialog is NOT showing
       if (showResumeDialog) return;
       
@@ -174,7 +208,7 @@ export default function SetupPage() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [handleToggle, startHold, cancelHold, showResumeDialog]);
+  }, [handleToggle, startHold, cancelHold, showResumeDialog, registerActivity]);
 
   // Write state when on setup screen
   useEffect(() => {
@@ -222,6 +256,11 @@ export default function SetupPage() {
       }
     };
   }, []);
+
+  // Show screensaver if idle
+  if (showScreensaver) {
+    return <Screensaver onDismiss={() => setShowScreensaver(false)} />;
+  }
 
   return (
     <div className="screen-wrapper">

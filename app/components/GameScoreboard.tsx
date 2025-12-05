@@ -33,6 +33,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   const prevTotalGamesRef = useRef(0);
   const prevTiebreakPointsRef = useRef(0);
   const prevSetsWonRef = useRef({ A: 0, B: 0 });
+  const isUndoingRef = useRef(false);
 
   // Screensaver state
   const [showScreensaver, setShowScreensaver] = useState(false);
@@ -67,7 +68,8 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
         scorePoint(teamOnLeft);
       } else if (key === 'p') {
         scorePoint(teamOnRight);
-      } else if (key === 'a') {
+      } else       if (key === 'a') {
+        isUndoingRef.current = true;
         undo();
       } else if (key === 'r') {
         onReset();
@@ -78,11 +80,11 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [scorePoint, undo, onReset, showSideSwap, showSetWin, teamOnLeft, teamOnRight, state.finished, registerActivity]);
 
-  // Idle detection for screensaver (10 minutes during game)
+  // Idle detection for screensaver (30 seconds of inactivity)
   useEffect(() => {
     const checkIdle = () => {
       const idleTime = Date.now() - lastActivity;
-      if (idleTime > 600000) { // 10 minutes
+      if (idleTime > 30000) { // 30 seconds
         setShowScreensaver(true);
       }
     };
@@ -119,7 +121,8 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
       const winningTeam: Team = currentSetsWon.A > prevSetsWonRef.current.A ? 'A' : 'B';
       const setNumber = currentSetsWon.A + currentSetsWon.B;
       
-      const completedSet = state.sets.find(s => s.completed && !prevSetsWonRef.current);
+      // Find the most recently completed set (last one in array that is completed)
+      const completedSet = [...state.sets].reverse().find(s => s.completed);
       
       let gamesScore = '';
       if (completedSet) {
@@ -144,36 +147,70 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   // Side swap detection
   useEffect(() => {
     if (state.finished || showSetWin) return;
+    
+    // Never show swap overlay when undoing - undo should restore state silently
+    const wasUndoing = isUndoingRef.current;
+    if (wasUndoing) {
+      // Reset the flag now that we've detected it
+      isUndoingRef.current = false;
+      // Still update refs to current values for correct tracking
+      const currentSet = state.sets[state.sets.length - 1];
+      if (currentSet.tiebreak) {
+        const tiebreakPointsA = currentSet.tiebreak.a;
+        const tiebreakPointsB = currentSet.tiebreak.b;
+        prevTiebreakPointsRef.current = tiebreakPointsA + tiebreakPointsB;
+      } else {
+        prevTotalGamesRef.current = currentSet.gamesA + currentSet.gamesB;
+        prevTiebreakPointsRef.current = 0;
+      }
+      return;
+    }
 
     const currentSet = state.sets[state.sets.length - 1];
     
     if (currentSet.tiebreak) {
-      const tiebreakPointsA = typeof view.points.A === 'string' ? parseInt(view.points.A) : 0;
-      const tiebreakPointsB = typeof view.points.B === 'string' ? parseInt(view.points.B) : 0;
+      // Read tie-break points directly from state
+      const tiebreakPointsA = currentSet.tiebreak.a;
+      const tiebreakPointsB = currentSet.tiebreak.b;
       const totalTiebreakPoints = tiebreakPointsA + tiebreakPointsB;
 
-      if (totalTiebreakPoints > prevTiebreakPointsRef.current) {
-        if (totalTiebreakPoints > 0 && totalTiebreakPoints % 6 === 0) {
-          setShowSideSwap(true);
-        }
-        prevTiebreakPointsRef.current = totalTiebreakPoints;
+      // Check if we're at a swap condition (every 6 points)
+      const isAtSwapCondition = totalTiebreakPoints > 0 && totalTiebreakPoints % 6 === 0;
+      
+      // Show swap if:
+      // 1. We're at a swap condition, AND
+      // 2. The total points changed (handles both forward and undo/re-score cases)
+      // 3. We're NOT undoing (checked above)
+      if (isAtSwapCondition && totalTiebreakPoints !== prevTiebreakPointsRef.current) {
+        setShowSideSwap(true);
       }
+      
+      // Always update ref to current value (ensures undo works correctly)
+      prevTiebreakPointsRef.current = totalTiebreakPoints;
     } else {
       const totalGames = currentSet.gamesA + currentSet.gamesB;
-
-      if (totalGames > prevTotalGamesRef.current) {
-        if (totalGames % 2 === 1) {
-          setShowSideSwap(true);
-        }
-        prevTotalGamesRef.current = totalGames;
+      
+      // Check if we're at a swap condition (odd-numbered games)
+      const isAtSwapCondition = totalGames % 2 === 1;
+      
+      // Show swap if:
+      // 1. We're at a swap condition, AND
+      // 2. The total games changed (handles both forward and undo/re-score cases)
+      // 3. We're NOT undoing (checked above)
+      if (isAtSwapCondition && totalGames !== prevTotalGamesRef.current) {
+        setShowSideSwap(true);
       }
-
+      
+      // Always update ref to current value (ensures undo works correctly)
+      prevTotalGamesRef.current = totalGames;
       prevTiebreakPointsRef.current = 0;
     }
   }, [state, sidesSwapped, view.points, showSetWin]);
 
   const handleSideSwapComplete = () => {
     setShowSideSwap(false);
+    // Update sidesSwapped state immediately when swap completes
+    // This ensures the state is correct for future undo operations
     swapSides();
   };
 
@@ -278,6 +315,28 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   return (
     <div className="screen-wrapper">
       <div className="screen-content game-scoreboard-screen layout-split-50-horizontal">
+        {/* Tie-break indicator */}
+        {view.flags.tiebreak && (
+          <div className="tiebreak-indicator" style={{
+            position: 'absolute',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#FFA500',
+            color: '#000',
+            padding: '10px 30px',
+            borderRadius: '8px',
+            fontSize: '24px',
+            fontWeight: 'bold',
+            zIndex: 1000,
+            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+            textTransform: 'uppercase',
+            letterSpacing: '2px'
+          }}>
+            TIE-BREAK
+          </div>
+        )}
+
         {/* Serving border */}
         <div
           className={`screen-border-serving-${servingBorderSide}`}

@@ -229,12 +229,30 @@ export function scorePoint(s: EngineState, rules: MatchRules, team: Team): Engin
       s.server = s.server === 'A' ? 'B' : 'A';
       s.currentGame = { pA: 0, pB: 0, inTiebreak: false, deuceCount: 0 };
     } else {
-      // Tiebreak server change: first point, then every 2 points
+      // Official tie-break serving rules (FIP - Padel):
+      // Point 0: Start server serves (1 point)
+      // Points 1-2: Opposite server serves (2 points)
+      // Points 3-4: Start server serves (2 points)
+      // Points 5-6: Opposite server serves (2 points)
+      // Points 7-8: Start server serves (2 points)
+      // etc.
+      // Pattern: 1, 2, 2, 2, 2, 2, 2...
       const total = a + b;
-      if (total === 1) {
-        s.server = set.tiebreak.startServer;
-      } else if ((total - 1) % 2 === 0) {
-        s.server = s.server === 'A' ? 'B' : 'A';
+      const startServer = set.tiebreak.startServer;
+      const oppositeServer = startServer === 'A' ? 'B' : 'A';
+      
+      if (total === 0) {
+        // Point 0: Start server serves (just 1 point)
+        s.server = startServer;
+      } else {
+        // Point 1+: Everyone else serves 2 points
+        // Subtract 1 (for the first single point), then check pairs
+        const pointsAfterFirst = total - 1;
+        const pairNumber = Math.floor(pointsAfterFirst / 2);
+        
+        // Even pairs (0, 2, 4...): opposite server serves 2
+        // Odd pairs (1, 3, 5...): start server serves 2
+        s.server = pairNumber % 2 === 0 ? oppositeServer : startServer;
       }
     }
     return s;

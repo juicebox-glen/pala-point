@@ -6,16 +6,21 @@ import type { MatchRules, DeuceRule, SetTieRule } from '../types/rules';
 const STORAGE_KEY = 'palapoint_saved_game';
 const MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
+interface HistoryEntry {
+  state: EngineState;
+  sidesSwapped: boolean;
+}
+
 interface SavedGameState {
   state: EngineState;
   rules: MatchRules;
-  history: EngineState[];
+  history: HistoryEntry[];
   sidesSwapped: boolean;
   timestamp: number;
 }
 
 // Save game state to localStorage
-function saveGameState(state: EngineState, rules: MatchRules, history: EngineState[], sidesSwapped: boolean): void {
+function saveGameState(state: EngineState, rules: MatchRules, history: HistoryEntry[], sidesSwapped: boolean): void {
   try {
     const savedState: SavedGameState = {
       state,
@@ -70,7 +75,7 @@ function clearSavedGame(): void {
 interface GameStore {
   state: EngineState;
   rules: MatchRules;
-  history: EngineState[];
+  history: HistoryEntry[];
   sidesSwapped: boolean;
   
   scorePoint: (team: Team) => void;
@@ -116,7 +121,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   scorePoint: (team) => {
     const { state, rules, history, sidesSwapped } = get();
     const newState = engineScorePoint(state, rules, team);
-    const newHistory = [...history, state].slice(-50);
+    // Save current state and sidesSwapped to history before scoring
+    const newHistory: HistoryEntry[] = [...history, { state, sidesSwapped }].slice(-50);
     set({ 
       state: newState, 
       history: newHistory
@@ -128,14 +134,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
   undo: () => {
     const { history } = get();
     if (history.length === 0) return;
-    const prev = history[history.length - 1];
-    set({ state: prev, history: history.slice(0, -1) });
+    const prevEntry = history[history.length - 1];
+    // Restore both the engine state and the sidesSwapped state
+    set({ 
+      state: prevEntry.state, 
+      sidesSwapped: prevEntry.sidesSwapped,
+      history: history.slice(0, -1) 
+    });
   },
 
-  reset: (server = 'A') => {
+  reset: (server?: Team) => {
     const { rules } = get();
+    // If no server specified, randomly select one
+    const startServer = server || (Math.random() > 0.5 ? 'A' : 'B');
     set({
-      state: initState(rules, server),
+      state: initState(rules, startServer),
       history: [],
       sidesSwapped: false
     });
@@ -154,10 +167,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     try {
+      // Migrate old history format (EngineState[]) to new format (HistoryEntry[])
+      let migratedHistory: HistoryEntry[];
+      if (saved.history.length > 0 && !('state' in saved.history[0])) {
+        // Old format: EngineState[]
+        migratedHistory = (saved.history as any[]).map((state: EngineState) => ({
+          state,
+          sidesSwapped: saved.sidesSwapped // Use current sidesSwapped for all entries (best guess)
+        }));
+      } else {
+        // New format: HistoryEntry[]
+        migratedHistory = saved.history as HistoryEntry[];
+      }
+      
       set({
         state: saved.state,
         rules: saved.rules,
-        history: saved.history,
+        history: migratedHistory,
         sidesSwapped: saved.sidesSwapped,
       });
       return true;
