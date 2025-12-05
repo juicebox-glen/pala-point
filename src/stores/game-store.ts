@@ -77,6 +77,8 @@ interface GameStore {
   rules: MatchRules;
   history: HistoryEntry[];
   sidesSwapped: boolean;
+  matchStartTime: string | null;  // ISO timestamp when game started
+  courtId: string | null;          // Court UUID from environment
   
   scorePoint: (team: Team) => void;
   undo: () => void;
@@ -84,6 +86,8 @@ interface GameStore {
   swapSides: () => void;
   restoreSavedGame: () => boolean;
   clearSavedGame: () => void;
+  setMatchStartTime: (time: string | null) => void;
+  setCourtId: (id: string | null) => void;
   
   setDeuceRule: (rule: DeuceRule) => void;
   setSetsTarget: (sets: 1 | 3) => void;
@@ -117,6 +121,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   
   history: [],
   sidesSwapped: false,
+  matchStartTime: null,
+  courtId: null,
 
   scorePoint: (team) => {
     const { state, rules, history, sidesSwapped } = get();
@@ -150,7 +156,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       state: initState(rules, startServer),
       history: [],
-      sidesSwapped: false
+      sidesSwapped: false,
+      matchStartTime: null  // Reset match start time
     });
     // Clear saved game when starting new game
     clearSavedGame();
@@ -200,6 +207,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to clear saved game:', error);
     }
+  },
+
+  setMatchStartTime: (time) => {
+    set({ matchStartTime: time });
+  },
+
+  setCourtId: (id) => {
+    set({ courtId: id });
   },
 
   setDeuceRule: (rule) => {

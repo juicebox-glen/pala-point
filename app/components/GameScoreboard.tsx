@@ -21,6 +21,8 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   const undo = useGameStore((s) => s.undo);
   const sidesSwapped = useGameStore((s) => s.sidesSwapped);
   const swapSides = useGameStore((s) => s.swapSides);
+  const matchStartTime = useGameStore((s) => s.matchStartTime);
+  const courtId = useGameStore((s) => s.courtId);
 
   const [showSideSwap, setShowSideSwap] = useState(false);
   const [showSetWin, setShowSetWin] = useState(false);
@@ -34,6 +36,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   const prevTiebreakPointsRef = useRef(0);
   const prevSetsWonRef = useRef({ A: 0, B: 0 });
   const isUndoingRef = useRef(false);
+  const matchSavedRef = useRef(false);
 
   // Screensaver state
   const [showScreensaver, setShowScreensaver] = useState(false);
@@ -222,6 +225,13 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
     prevTiebreakPointsRef.current = 0;
   };
 
+  // Reset matchSavedRef when a new game starts (state is not finished)
+  useEffect(() => {
+    if (!state.finished) {
+      matchSavedRef.current = false;
+    }
+  }, [state.finished]);
+
   // Write game state when score changes
   useEffect(() => {
     if (state.finished) return; // Handled by finished state effect
@@ -244,9 +254,11 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
     });
   }, [view.games.A, view.games.B, state.finished, rules.scoringSystem, rules.setsTarget, rules.deuceRule, rules.setTieRule]);
 
-  // Write finished state when game ends
+  // Write finished state and save match when game ends
   useEffect(() => {
-    if (state.finished && state.finished.winner) {
+    if (state.finished && state.finished.winner && !matchSavedRef.current) {
+      matchSavedRef.current = true; // Prevent duplicate saves
+      
       // Detect if it's Quick Play (default config: 1 set, advantage, tiebreak)
       const isQuickPlay = rules.scoringSystem === 'standard' &&
         rules.setsTarget === 1 &&
@@ -265,8 +277,56 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
         current_score: finalScore,
         game_mode: gameMode
       });
+
+      // Save match to Supabase
+      async function saveMatch() {
+        if (!courtId) {
+          console.error('COURT_ID not configured - match not saved');
+          return;
+        }
+
+        const endTime = new Date().toISOString();
+        
+        // Calculate duration
+        const durationSeconds = matchStartTime 
+          ? Math.round((new Date(endTime).getTime() - new Date(matchStartTime).getTime()) / 1000)
+          : null;
+
+        // Get final scores - use sets won for match score (for multi-set) or games for single-set
+        // For finished matches, setsWon represents the final match result
+        const team1Score = view.setsWon.A ?? 0;
+        const team2Score = view.setsWon.B ?? 0;
+
+        try {
+          const response = await fetch('/api/save-match', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              court_id: courtId,
+              mode: gameMode,
+              team1_score: team1Score,
+              team2_score: team2Score,
+              duration_seconds: durationSeconds,
+              started_at: matchStartTime,
+              ended_at: endTime
+            })
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save match');
+          }
+
+          console.log('Match saved successfully');
+        } catch (error) {
+          console.error('Failed to save match:', error);
+          // Don't block the game - continue showing win screen even if save fails
+        }
+      }
+
+      saveMatch();
     }
-  }, [state.finished, view.games.A, view.games.B, rules.scoringSystem, rules.setsTarget, rules.deuceRule, rules.setTieRule]);
+  }, [state.finished, view.games.A, view.games.B, view.setsWon.A, view.setsWon.B, rules.scoringSystem, rules.setsTarget, rules.deuceRule, rules.setTieRule, matchStartTime, courtId]);
 
   // Show screensaver if idle
   if (showScreensaver) {

@@ -24,6 +24,8 @@ export default function SetupPage() {
   const setGameRules = useGameStore((s) => s.setGameRules);
   const restoreSavedGame = useGameStore((s) => s.restoreSavedGame);
   const clearSavedGame = useGameStore((s) => s.clearSavedGame);
+  const setMatchStartTime = useGameStore((s) => s.setMatchStartTime);
+  const setCourtId = useGameStore((s) => s.setCourtId);
 
   const [step, setStep] = useState<SetupStep>('game-type');
   const [gameType, setGameType] = useState<GameTypeSelection>('quick-play');
@@ -74,6 +76,12 @@ export default function SetupPage() {
     }
   }, [step, cancelHold]);
 
+  // Initialize court ID from environment on mount
+  useEffect(() => {
+    const courtId = process.env.NEXT_PUBLIC_COURT_ID || null;
+    setCourtId(courtId);
+  }, [setCourtId]);
+
   // Confirm selection (R key hold)
   const handleConfirm = useCallback(() => {
     if (step === 'game-type') {
@@ -85,6 +93,8 @@ export default function SetupPage() {
           setsTarget: 1
         });
         reset();
+        // Set match start time when game starts
+        setMatchStartTime(new Date().toISOString());
         writeGameState({
           court_state: 'in_play',
           current_score: { teamA: 0, teamB: 0 },
@@ -105,6 +115,8 @@ export default function SetupPage() {
       // Apply custom config and start game
       setGameRules(customConfig);
       reset();
+      // Set match start time when game starts
+      setMatchStartTime(new Date().toISOString());
       writeGameState({
         court_state: 'in_play',
         current_score: { teamA: 0, teamB: 0 },
@@ -112,7 +124,7 @@ export default function SetupPage() {
       });
       router.push('/game');
     }
-  }, [step, gameType, customConfig, setGameRules, reset, router]);
+  }, [step, gameType, customConfig, setGameRules, reset, router, setMatchStartTime]);
 
   // Complete hold action
   const completeHold = useCallback(() => {

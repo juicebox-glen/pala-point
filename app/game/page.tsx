@@ -41,6 +41,7 @@ export default function GamePage() {
 
   const handleReset = () => {
     reset();
+    // matchSavedRef will be reset when a new game starts (in GameScoreboard)
     writeGameState({
       court_state: 'idle',
       current_score: null,

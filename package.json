@@ -61,7 +61,8 @@
     "vaul": "^0.9.6",
     "ws": "^8.18.3",
     "zod": "^3.24.1",
-    "zustand": "^5.0.9"
+    "zustand": "^5.0.9",
+    "@supabase/supabase-js": "^2.39.0"
   },
   "devDependencies": {
     "@types/node": "^22",
