@@ -1,5 +1,0 @@
-{
-  "/api/write-state/route": "app/api/write-state/route.js",
-  "/game/page": "app/game/page.js",
-  "/page": "app/page.js"
-}
