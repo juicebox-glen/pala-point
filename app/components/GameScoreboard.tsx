@@ -54,24 +54,16 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   // Register activity
   const registerActivity = useCallback(() => {
     setLastActivity(Date.now());
-  }, []);
-
-  // Handle screensaver dismissal - must reset activity timer
-  const handleScreensaverDismiss = useCallback(() => {
-    setLastActivity(Date.now()); // CRITICAL: Reset timer when exiting screensaver
-    setShowScreensaver(false);
-  }, []);
+    if (showScreensaver) {
+      setShowScreensaver(false);
+    }
+  }, [showScreensaver]);
 
   // Keyboard controls
   useEffect(() => {
     if (showSideSwap || showSetWin || state.finished) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // If screensaver is showing, let the Screensaver component handle it
-      if (showScreensaver) {
-        return;
-      }
-      
       registerActivity();
       const key = e.key.toLowerCase();
       
@@ -79,7 +71,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
         scorePoint(teamOnLeft);
       } else if (key === 'p') {
         scorePoint(teamOnRight);
-      } else if (key === 'a') {
+      } else       if (key === 'a') {
         isUndoingRef.current = true;
         undo();
       } else if (key === 'r') {
@@ -89,15 +81,10 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [scorePoint, undo, onReset, showSideSwap, showSetWin, teamOnLeft, teamOnRight, state.finished, registerActivity, showScreensaver]);
+  }, [scorePoint, undo, onReset, showSideSwap, showSetWin, teamOnLeft, teamOnRight, state.finished, registerActivity]);
 
   // Idle detection for screensaver (30 seconds of inactivity)
   useEffect(() => {
-    // Don't check idle while screensaver is showing
-    if (showScreensaver) {
-      return;
-    }
-
     const checkIdle = () => {
       const idleTime = Date.now() - lastActivity;
       if (idleTime > 30000) { // 30 seconds
@@ -112,7 +99,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
         clearInterval(idleTimerRef.current);
       }
     };
-  }, [lastActivity, showScreensaver]);
+  }, [lastActivity]);
 
   // Track activity on mouse movement
   useEffect(() => {
@@ -305,12 +292,26 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
           ? Math.round((new Date(endTime).getTime() - new Date(matchStartTime).getTime()) / 1000)
           : null;
 
-        // Get the final game scores from the last completed set
-        const lastSetIndex = state.sets.length - 1;
-        const lastSet = state.sets[lastSetIndex];
+        // Determine if this is a 1-set or 3-set match
+        // setsTarget: 1 = 1-set match, setsTarget: 2 = 3-set match (best of 3)
+        const is3SetMatch = rules.scoringSystem === 'standard' && 
+          'setsTarget' in rules && 
+          (rules as { setsTarget: number }).setsTarget === 2;
         
-        const team1Score = lastSet?.gamesA ?? 0;
-        const team2Score = lastSet?.gamesB ?? 0;
+        let team1Score: number;
+        let team2Score: number;
+        
+        if (is3SetMatch) {
+          // For 3-set matches: save sets won (2-1, 2-0, etc.)
+          team1Score = view.setsWon.A ?? 0;
+          team2Score = view.setsWon.B ?? 0;
+        } else {
+          // For 1-set matches: save game scores (6-4, 7-6, etc.)
+          const lastSetIndex = state.sets.length - 1;
+          const lastSet = state.sets[lastSetIndex];
+          team1Score = lastSet?.gamesA ?? 0;
+          team2Score = lastSet?.gamesB ?? 0;
+        }
 
         try {
           const response = await fetch('/api/save-match', {
@@ -345,7 +346,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
 
   // Show screensaver if idle
   if (showScreensaver) {
-    return <Screensaver onDismiss={handleScreensaverDismiss} />;
+    return <Screensaver onDismiss={() => setShowScreensaver(false)} />;
   }
 
   // Show match win if finished
