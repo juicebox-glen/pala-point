@@ -22,7 +22,7 @@
 .tile.selected {
   background-color: var(--color-primary);
   transform: scale(1.02);
-  box-shadow: inset 0 0 60px rgba(4, 202, 149, 0.3);
+  box-shadow: inset 0 0 60px rgba(255, 20, 147, 0.3);
 }
 
 /* Hold Progress Bar - Fills from left to right */
