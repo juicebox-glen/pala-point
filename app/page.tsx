@@ -496,7 +496,7 @@ function ResumeGameDialog({
           borderRadius: '8px',
           textAlign: 'center',
           maxWidth: '600px',
-          border: '2px solid var(--color-team-1, #04CA95)',
+          border: '2px solid var(--color-team-1, #FF1493)',
         }}
       >
         <div 
@@ -524,11 +524,11 @@ function ResumeGameDialog({
                 padding: '1rem 2rem',
                 fontSize: '1.2rem',
                 backgroundColor: selected === 'yes' 
-                  ? 'var(--color-team-1, #04CA95)' 
+                  ? 'var(--color-team-1, #FF1493)' 
                   : 'rgba(4, 202, 149, 0.3)',
                 color: selected === 'yes' ? '#000' : '#888',
                 border: selected === 'yes' 
-                  ? '2px solid var(--color-team-1, #04CA95)' 
+                  ? '2px solid var(--color-team-1, #FF1493)' 
                   : '2px solid rgba(4, 202, 149, 0.5)',
                 borderRadius: '4px',
                 cursor: 'pointer',
