@@ -108,7 +108,7 @@ async function executeUpdate(command) {
   
   try {
     console.log('📥 Pulling latest code...');
-    await execPromise('cd /home/palapoint/pala-point && git fetch origin && git reset --hard origin/v3-clean');
+    await execPromise('cd /home/palapoint/pala-point && git fetch origin && git reset --hard origin/main');
     
     console.log('📦 Installing dependencies...');
     await execPromise('cd /home/palapoint/pala-point && npm install --legacy-peer-deps');
