@@ -54,10 +54,13 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   // Register activity
   const registerActivity = useCallback(() => {
     setLastActivity(Date.now());
-    if (showScreensaver) {
-      setShowScreensaver(false);
-    }
-  }, [showScreensaver]);
+  }, []);
+
+  // Handle screensaver dismissal - must reset activity timer
+  const handleScreensaverDismiss = useCallback(() => {
+    setLastActivity(Date.now()); // CRITICAL: Reset timer when exiting screensaver
+    setShowScreensaver(false);
+  }, []);
 
   // Keyboard controls
   useEffect(() => {
@@ -346,7 +349,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
 
   // Show screensaver if idle
   if (showScreensaver) {
-    return <Screensaver onDismiss={() => setShowScreensaver(false)} />;
+    return <Screensaver onDismiss={handleScreensaverDismiss} />;
   }
 
   // Show match win if finished
