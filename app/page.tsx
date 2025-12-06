@@ -156,13 +156,21 @@ export default function SetupPage() {
   // Register activity for screensaver
   const registerActivity = useCallback(() => {
     setLastActivity(Date.now());
-    if (showScreensaver) {
-      setShowScreensaver(false);
-    }
-  }, [showScreensaver]);
+  }, []);
+
+  // Handle screensaver dismissal - must reset activity timer
+  const handleScreensaverDismiss = useCallback(() => {
+    setLastActivity(Date.now()); // CRITICAL: Reset timer when exiting screensaver
+    setShowScreensaver(false);
+  }, []);
 
   // Idle detection for screensaver (30 seconds of inactivity)
   useEffect(() => {
+    // Don't check idle while screensaver is showing
+    if (showScreensaver) {
+      return;
+    }
+
     const checkIdle = () => {
       const idleTime = Date.now() - lastActivity;
       if (idleTime > 30000) { // 30 seconds
@@ -177,7 +185,7 @@ export default function SetupPage() {
         clearInterval(idleTimerRef.current);
       }
     };
-  }, [lastActivity]);
+  }, [lastActivity, showScreensaver]);
 
   // Keyboard controls (disabled when dialog is showing)
   useEffect(() => {
@@ -271,7 +279,7 @@ export default function SetupPage() {
 
   // Show screensaver if idle
   if (showScreensaver) {
-    return <Screensaver onDismiss={() => setShowScreensaver(false)} />;
+    return <Screensaver onDismiss={handleScreensaverDismiss} />;
   }
 
   return (

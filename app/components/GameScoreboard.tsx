@@ -54,16 +54,24 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   // Register activity
   const registerActivity = useCallback(() => {
     setLastActivity(Date.now());
-    if (showScreensaver) {
-      setShowScreensaver(false);
-    }
-  }, [showScreensaver]);
+  }, []);
+
+  // Handle screensaver dismissal - must reset activity timer
+  const handleScreensaverDismiss = useCallback(() => {
+    setLastActivity(Date.now()); // CRITICAL: Reset timer when exiting screensaver
+    setShowScreensaver(false);
+  }, []);
 
   // Keyboard controls
   useEffect(() => {
     if (showSideSwap || showSetWin || state.finished) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // If screensaver is showing, let the Screensaver component handle it
+      if (showScreensaver) {
+        return;
+      }
+      
       registerActivity();
       const key = e.key.toLowerCase();
       
@@ -71,7 +79,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
         scorePoint(teamOnLeft);
       } else if (key === 'p') {
         scorePoint(teamOnRight);
-      } else       if (key === 'a') {
+      } else if (key === 'a') {
         isUndoingRef.current = true;
         undo();
       } else if (key === 'r') {
@@ -81,10 +89,15 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [scorePoint, undo, onReset, showSideSwap, showSetWin, teamOnLeft, teamOnRight, state.finished, registerActivity]);
+  }, [scorePoint, undo, onReset, showSideSwap, showSetWin, teamOnLeft, teamOnRight, state.finished, registerActivity, showScreensaver]);
 
   // Idle detection for screensaver (30 seconds of inactivity)
   useEffect(() => {
+    // Don't check idle while screensaver is showing
+    if (showScreensaver) {
+      return;
+    }
+
     const checkIdle = () => {
       const idleTime = Date.now() - lastActivity;
       if (idleTime > 30000) { // 30 seconds
@@ -99,7 +112,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
         clearInterval(idleTimerRef.current);
       }
     };
-  }, [lastActivity]);
+  }, [lastActivity, showScreensaver]);
 
   // Track activity on mouse movement
   useEffect(() => {
@@ -292,10 +305,12 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
           ? Math.round((new Date(endTime).getTime() - new Date(matchStartTime).getTime()) / 1000)
           : null;
 
-        // Get final scores - use sets won for match score (for multi-set) or games for single-set
-        // For finished matches, setsWon represents the final match result
-        const team1Score = view.setsWon.A ?? 0;
-        const team2Score = view.setsWon.B ?? 0;
+        // Get the final game scores from the last completed set
+        const lastSetIndex = state.sets.length - 1;
+        const lastSet = state.sets[lastSetIndex];
+        
+        const team1Score = lastSet?.gamesA ?? 0;
+        const team2Score = lastSet?.gamesB ?? 0;
 
         try {
           const response = await fetch('/api/save-match', {
@@ -330,7 +345,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
 
   // Show screensaver if idle
   if (showScreensaver) {
-    return <Screensaver onDismiss={() => setShowScreensaver(false)} />;
+    return <Screensaver onDismiss={handleScreensaverDismiss} />;
   }
 
   // Show match win if finished

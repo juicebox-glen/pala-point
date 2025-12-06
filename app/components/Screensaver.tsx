@@ -33,7 +33,12 @@ export default function Screensaver({ onDismiss }: ScreensaverProps) {
 
   // Dismiss on any key press or mouse movement
   useEffect(() => {
-    const handleActivity = () => {
+    const handleActivity = (e?: Event) => {
+      // Prevent event propagation to avoid double-handling
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       onDismiss();
     };
 

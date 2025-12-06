@@ -32,10 +32,13 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
   // Register activity
   const registerActivity = useCallback(() => {
     setLastActivity(Date.now());
-    if (showScreensaver) {
-      setShowScreensaver(false);
-    }
-  }, [showScreensaver]);
+  }, []);
+
+  // Handle screensaver dismissal - must reset activity timer
+  const handleScreensaverDismiss = useCallback(() => {
+    setLastActivity(Date.now()); // CRITICAL: Reset timer when exiting screensaver
+    setShowScreensaver(false);
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -88,6 +91,11 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
 
   // Idle detection for screensaver (5 minutes on match win)
   useEffect(() => {
+    // Don't check idle while screensaver is showing
+    if (showScreensaver) {
+      return;
+    }
+
     const checkIdle = () => {
       const idleTime = Date.now() - lastActivity;
       if (idleTime > 300000) { // 5 minutes
@@ -102,7 +110,7 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
         clearInterval(idleTimerRef.current);
       }
     };
-  }, [lastActivity]);
+  }, [lastActivity, showScreensaver]);
 
   // Track activity on mouse movement
   useEffect(() => {
@@ -123,7 +131,7 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
 
   // Show screensaver if idle
   if (showScreensaver) {
-    return <Screensaver onDismiss={() => setShowScreensaver(false)} />;
+    return <Screensaver onDismiss={handleScreensaverDismiss} />;
   }
 
   const winner = state.finished.winner;
