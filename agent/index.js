@@ -122,6 +122,9 @@ async function executeUpdate(command) {
     console.log('🔄 Restarting app...');
     await execPromise('pm2 restart palapoint-app');
     
+    console.log('🔄 Refreshing browser...');
+    await execPromise('DISPLAY=:0 xdotool key F5');
+    
     // Get new version
     const { stdout } = await execPromise('cd /home/palapoint/pala-point && git rev-parse --short HEAD');
     const newVersion = stdout.trim();

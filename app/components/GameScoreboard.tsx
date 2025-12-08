@@ -37,6 +37,10 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   const prevSetsWonRef = useRef({ A: 0, B: 0 });
   const isUndoingRef = useRef(false);
   const matchSavedRef = useRef(false);
+  
+  // Score animation state (for point-scoring animation)
+  const [leftScoreAnimating, setLeftScoreAnimating] = useState(false);
+  const [rightScoreAnimating, setRightScoreAnimating] = useState(false);
 
   // Screensaver state
   const [showScreensaver, setShowScreensaver] = useState(false);
@@ -71,8 +75,14 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
       const key = e.key.toLowerCase();
       
       if (key === 'q') {
+        // Trigger score animation for left side
+        setLeftScoreAnimating(true);
+        setTimeout(() => setLeftScoreAnimating(false), 600);
         scorePoint(teamOnLeft);
       } else if (key === 'p') {
+        // Trigger score animation for right side
+        setRightScoreAnimating(true);
+        setTimeout(() => setRightScoreAnimating(false), 600);
         scorePoint(teamOnRight);
       } else       if (key === 'a') {
         isUndoingRef.current = true;
@@ -449,7 +459,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
           <div className="game-team-name">{leftTeamData.name}</div>
           
           <div className="game-score-display">
-            <div className={leftTeamData.points === 'ADV' ? 'game-score-adv' : 'game-score'}>
+            <div className={`${leftTeamData.points === 'ADV' ? 'game-score-adv' : 'game-score'} ${leftScoreAnimating ? 'game-score-animate' : ''}`}>
               {leftTeamData.points}
             </div>
           </div>
@@ -473,7 +483,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
           <div className="game-team-name">{rightTeamData.name}</div>
           
           <div className="game-score-display">
-            <div className={rightTeamData.points === 'ADV' ? 'game-score-adv' : 'game-score'}>
+            <div className={`${rightTeamData.points === 'ADV' ? 'game-score-adv' : 'game-score'} ${rightScoreAnimating ? 'game-score-animate' : ''}`}>
               {rightTeamData.points}
             </div>
           </div>
