@@ -116,6 +116,9 @@ async function executeUpdate(command) {
     console.log('🔨 Building app...');
     await execPromise('cd /home/palapoint/pala-point && npm run build');
     
+    console.log('🗑️  Clearing cache...');
+    await execPromise('cd /home/palapoint/pala-point && rm -rf .next/cache');
+    
     console.log('🔄 Restarting app...');
     await execPromise('pm2 restart palapoint-app');
     
