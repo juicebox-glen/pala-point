@@ -303,6 +303,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
         
         let team1Score: number;
         let team2Score: number;
+        let lastSet: any = null;
         
         if (is3SetMatch) {
           // For 3-set matches: save sets won (2-1, 2-0, etc.)
@@ -311,10 +312,31 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
         } else {
           // For 1-set matches: save game scores (6-4, 7-6, etc.)
           const lastSetIndex = state.sets.length - 1;
-          const lastSet = state.sets[lastSetIndex];
+          lastSet = state.sets[lastSetIndex];
           team1Score = lastSet?.gamesA ?? 0;
           team2Score = lastSet?.gamesB ?? 0;
         }
+
+        console.log('=== MATCH SAVE DEBUG ===');
+        console.log('Court ID:', courtId);
+        console.log('Game mode:', gameMode);
+        console.log('Match start time:', matchStartTime);
+        console.log('Current state:', state);
+        console.log('Rules:', rules);
+        console.log('Last set:', lastSet);
+        console.log('Team 1 score:', team1Score);
+        console.log('Team 2 score:', team2Score);
+        console.log('Duration seconds:', durationSeconds);
+        console.log('Payload:', JSON.stringify({
+          court_id: courtId,
+          mode: gameMode,
+          team1_score: team1Score,
+          team2_score: team2Score,
+          duration_seconds: durationSeconds,
+          started_at: matchStartTime,
+          ended_at: endTime
+        }, null, 2));
+        console.log('======================');
 
         try {
           const response = await fetch('/api/save-match', {
