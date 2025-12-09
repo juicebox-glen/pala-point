@@ -12,6 +12,7 @@ export default function DevIndex() {
     { name: 'Game Statistics', path: '/dev/game-stats', description: 'Game stats analytics (Slide 1)' },
     { name: 'Match Momentum', path: '/dev/match-momentum', description: 'Match momentum visualization (Slide 2)' },
     { name: 'Service Stats', path: '/dev/service-stats', description: 'Service statistics (Slide 3)' },
+    { name: 'Confetti Test', path: '/dev/confetti-test', description: 'Test confetti/fireworks animation' },
     { name: 'Screensaver', path: '/dev/screensaver', description: 'Advertising screensaver' },
   ];
 

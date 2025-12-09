@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 interface ScreensaverProps {
   onDismiss: () => void;
@@ -15,21 +15,25 @@ const SCREENSAVER_IMAGES = [
 const IMAGE_ROTATION_INTERVAL = 5000; // 5 seconds
 
 export default function Screensaver({ onDismiss }: ScreensaverProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const imageTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // For now, just show the first image (ad1)
+  const currentImageIndex = 0;
+  
+  // TODO: Re-enable slideshow functionality when needed
+  // const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  // const imageTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Rotate images
-  useEffect(() => {
-    imageTimerRef.current = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % SCREENSAVER_IMAGES.length);
-    }, IMAGE_ROTATION_INTERVAL);
+  // Rotate images - COMMENTED OUT FOR NOW (single image mode)
+  // useEffect(() => {
+  //   imageTimerRef.current = setInterval(() => {
+  //     setCurrentImageIndex((prev) => (prev + 1) % SCREENSAVER_IMAGES.length);
+  //   }, IMAGE_ROTATION_INTERVAL);
 
-    return () => {
-      if (imageTimerRef.current) {
-        clearInterval(imageTimerRef.current);
-      }
-    };
-  }, []);
+  //   return () => {
+  //     if (imageTimerRef.current) {
+  //       clearInterval(imageTimerRef.current);
+  //     }
+  //   };
+  // }, []);
 
   // Dismiss on any key press or mouse movement
   useEffect(() => {
@@ -66,8 +70,8 @@ export default function Screensaver({ onDismiss }: ScreensaverProps) {
           />
         </div>
 
-        {/* Indicator dots */}
-        <div className="screensaver-indicator">
+        {/* Indicator dots - COMMENTED OUT FOR NOW (single image mode) */}
+        {/* <div className="screensaver-indicator">
           <div className="screensaver-dots">
             {SCREENSAVER_IMAGES.map((_, index) => (
               <div
@@ -76,6 +80,11 @@ export default function Screensaver({ onDismiss }: ScreensaverProps) {
               />
             ))}
           </div>
+          <p className="screensaver-text">Press any key to continue</p>
+        </div> */}
+        
+        {/* Simple text indicator for single image */}
+        <div className="screensaver-indicator">
           <p className="screensaver-text">Press any key to continue</p>
         </div>
       </div>

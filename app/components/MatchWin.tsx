@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { Team } from "@lib/engine/engine";
 import type { EngineState } from "@lib/engine/engine";
 import Screensaver from "./Screensaver";
+import Confetti from "react-confetti";
 
 interface MatchWinProps {
   state: EngineState;
@@ -22,6 +23,20 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
   const [showScreensaver, setShowScreensaver] = useState(false);
   const [lastActivity, setLastActivity] = useState(Date.now());
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fireworks/confetti state - initialize to true if match is finished (we start on slide 0)
+  const [showConfetti, setShowConfetti] = useState(state.finished ? true : false);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+
+  // Get window size for confetti
+  useEffect(() => {
+    const updateSize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
   const handleNewGame = useCallback(() => {
     if (completedRef.current) return;
@@ -88,6 +103,22 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
 
     return () => clearTimeout(resetTimer);
   }, [manualNavigation]);
+
+  // Trigger confetti when on match result slide (slide 0)
+  useEffect(() => {
+    if (currentSlide === 0 && state.finished) {
+      // Trigger confetti immediately when on slide 0
+      setShowConfetti(true);
+      // Auto-hide after 8 seconds to let confetti animation complete naturally
+      const timer = setTimeout(() => {
+        setShowConfetti(false);
+      }, 8000);
+      return () => clearTimeout(timer);
+    } else if (currentSlide !== 0) {
+      // Hide confetti when leaving slide 0
+      setShowConfetti(false);
+    }
+  }, [currentSlide, state.finished]);
 
   // Idle detection for screensaver (5 minutes on match win)
   useEffect(() => {
@@ -197,11 +228,32 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
   const momentumDots = generateMomentumDots();
 
   return (
-    <div className="screen-wrapper">
-      <div className="screen-content screen-bordered" style={{ borderColor }}>
-        <div className="screen-border" style={{ borderColor }} />
-        
-        <div className="content-centered">
+    <>
+      {/* Fireworks/Confetti - Only show on slide 0 */}
+      {showConfetti && windowSize.width > 0 && (
+        <Confetti
+          width={windowSize.width}
+          height={windowSize.height}
+          recycle={false}
+          numberOfPieces={500}
+          colors={["#04CA95", "#BB86FC", "#D0FF14", "#FFFFFF"]}
+          gravity={0.3}
+          initialVelocityY={20}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            zIndex: 9999,
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      
+      <div className="screen-wrapper">
+        <div className="screen-content screen-bordered" style={{ borderColor }}>
+          <div className="screen-border" style={{ borderColor }} />
+          
+          <div className="content-centered">
           {/* Slide 0: Match Result */}
           {currentSlide === 0 && (
             <div className="match-win-content">
@@ -357,5 +409,6 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { EngineState, Team } from "@/lib/engine/engine";
+import Confetti from "react-confetti";
 
 // Mock match state
 const createMockMatchState = (winner: Team, sets: Array<[number, number]>): EngineState => {
@@ -40,6 +41,30 @@ const PRESET_STATES: Record<string, EngineState> = {
 
 export default function MatchResultDevPage() {
   const [state, setState] = useState<EngineState>(PRESET_STATES['team-a-wins-1-set']);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+
+  // Get window size for confetti
+  useEffect(() => {
+    const updateSize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+
+  // Trigger confetti when component mounts
+  useEffect(() => {
+    if (state.finished) {
+      setShowConfetti(true);
+      // Auto-hide after 8 seconds to let confetti animation complete naturally
+      const timer = setTimeout(() => {
+        setShowConfetti(false);
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [state.finished]);
 
   if (!state.finished) return null;
 
@@ -51,8 +76,29 @@ export default function MatchResultDevPage() {
   const completedSets = state.sets.filter(s => s.completed);
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh', backgroundColor: '#121212' }}>
-      {/* Controls */}
+    <>
+      {/* Fireworks/Confetti */}
+      {showConfetti && windowSize.width > 0 && (
+        <Confetti
+          width={windowSize.width}
+          height={windowSize.height}
+          recycle={false}
+          numberOfPieces={500}
+          colors={["#04CA95", "#BB86FC", "#D0FF14", "#FFFFFF"]}
+          gravity={0.3}
+          initialVelocityY={20}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            zIndex: 10000,
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      
+      <div style={{ position: 'relative', width: '100vw', height: '100vh', backgroundColor: '#121212' }}>
+        {/* Controls */}
       <div style={{
         position: 'absolute',
         top: '1rem',
@@ -111,6 +157,7 @@ export default function MatchResultDevPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
