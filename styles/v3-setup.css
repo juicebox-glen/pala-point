@@ -12,11 +12,16 @@
   align-items: center;
   justify-content: center;
   background-color: var(--color-bg-tertiary);
-  transition: all 0.3s ease;
+  /* Optimized transitions - only transform and opacity (GPU accelerated) */
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
   position: relative;
   overflow: hidden;
   transform: scale(1);
+  /* Performance hints */
+  will-change: transform, background-color;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .tile.selected {
@@ -44,9 +49,11 @@
   letter-spacing: 0.1em;
   color: #9CA3AF;
   text-align: center;
-  transition: all 0.3s ease;
+  /* Optimized transition - only color and filter (GPU accelerated) */
+  transition: color 0.15s ease, filter 0.15s ease;
   position: relative;
   z-index: 1;
+  will-change: color, filter;
 }
 
 .tile.selected .setup-title {
@@ -62,9 +69,11 @@
   text-align: center;
   line-height: 0.8;
   margin-bottom: 4vw;
-  transition: all 0.3s ease;
+  /* Optimized transition - only color and filter (GPU accelerated) */
+  transition: color 0.15s ease, filter 0.15s ease;
   position: relative;
   z-index: 1;
+  will-change: color, filter;
 }
 
 .tile.selected .setup-number {
@@ -78,9 +87,11 @@
   letter-spacing: 0.2em;
   color: #9CA3AF;
   text-align: center;
-  transition: all 0.3s ease;
+  /* Optimized transition - only color and filter (GPU accelerated) */
+  transition: color 0.15s ease, filter 0.15s ease;
   position: relative;
   z-index: 1;
+  will-change: color, filter;
 }
 
 .tile.selected .setup-label {
