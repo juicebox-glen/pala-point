@@ -2,7 +2,7 @@
 
 /* Add court background to game screen */
 .game-scoreboard-screen .screen-content {
-  background-image: url('/images/court.png');
+  background-image: url('/images/court.svg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

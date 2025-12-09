@@ -12,7 +12,7 @@
   
   /* Backgrounds */
   --color-bg-primary: #121212;     /* Main background */
-  --color-bg-secondary: #1E1E1E;   /* Secondary background */
+  --color-bg-secondary: #1E1E1F;   /* Secondary background */
   --color-bg-tertiary: #2A2A2A;    /* Tertiary background */
   
   /* Dark variations for split backgrounds */
@@ -100,9 +100,9 @@
   --font-family: 'Inter', system-ui, sans-serif;
   
   /* Additional Background Colors */
-  --color-bg-black: #000000;       /* Pure black for outer frame */
+  --color-bg-black: #121212;       /* Darkest background (was #000000) */
   --color-bg-dark: #121212;        /* Main dark background */
-  --color-bg-medium: #2A2A2A;      /* Lighter dark background */
+  --color-bg-medium: #1E1E1F;      /* Lighter dark background */
   --color-selected: #04CA95;       /* Selected state background */
   
   /* Transition All */

@@ -9,7 +9,7 @@ export default function ServerDevPage() {
   const [server, setServer] = useState<Team>('A');
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh', backgroundColor: '#000' }}>
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', backgroundColor: '#121212' }}>
       {/* Controls */}
       <div style={{
         position: 'absolute',
@@ -21,7 +21,10 @@ export default function ServerDevPage() {
         borderRadius: '8px',
         color: 'white'
       }}>
-        <h3 style={{ marginBottom: '1rem' }}>Server Announcement</h3>
+        <h3 style={{ marginBottom: '1rem' }}>Server Announcement (Combined)</h3>
+        <p style={{ fontSize: '0.85rem', color: '#999', marginBottom: '1rem' }}>
+          Note: Use /dev/server-selection and /dev/server-announcement for separate phases
+        </p>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button onClick={() => setServer('A')} style={buttonStyle}>Team A Serves</button>
           <button onClick={() => setServer('B')} style={buttonStyle}>Team B Serves</button>

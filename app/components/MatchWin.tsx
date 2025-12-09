@@ -150,7 +150,7 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
 
   // Generate momentum dots from point history
   const generateMomentumDots = () => {
-    const totalDots = 98; // 14 columns x 7 rows
+    const totalDots = 50; // 10 columns x 5 rows to match design
     const pointHistory = state.stats.pointHistory;
     const totalPoints = pointHistory.length;
 

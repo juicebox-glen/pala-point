@@ -491,7 +491,7 @@ function ResumeGameDialog({
     >
       <div 
         style={{
-          backgroundColor: 'var(--color-bg-primary, #1a1a1a)',
+          backgroundColor: 'var(--color-bg-primary, #121212)',
           padding: '3rem',
           borderRadius: '8px',
           textAlign: 'center',
@@ -548,7 +548,7 @@ function ResumeGameDialog({
                     left: 0,
                     height: '4px',
                     width: `${holdProgress}%`,
-                    backgroundColor: '#000',
+                    backgroundColor: '#121212',
                     transition: 'width 0.1s',
                   }}
                 />

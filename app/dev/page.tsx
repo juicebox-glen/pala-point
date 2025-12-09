@@ -3,11 +3,15 @@ import Link from "next/link";
 export default function DevIndex() {
   const screens = [
     { name: 'Setup', path: '/dev/setup', description: 'Game type selection screen' },
-    { name: 'Server Announcement', path: '/dev/server', description: 'Server selection with coin toss' },
+    { name: 'Server Selection', path: '/dev/server-selection', description: 'Phase 1: Selecting server with bouncing ball' },
+    { name: 'Server Announcement', path: '/dev/server-announcement', description: 'Phase 2: Team serves first announcement' },
     { name: 'Game Scoreboard', path: '/dev/game', description: 'Main game screen with various states' },
     { name: 'Side Swap', path: '/dev/side-swap', description: 'Side swap overlay' },
     { name: 'Set Win', path: '/dev/set-win', description: 'Set win celebration' },
-    { name: 'Match Win', path: '/dev/match-win', description: 'Match win with stats slideshow' },
+    { name: 'Match Result', path: '/dev/match-result', description: 'Match win screen (Slide 0)' },
+    { name: 'Game Statistics', path: '/dev/game-stats', description: 'Game stats analytics (Slide 1)' },
+    { name: 'Match Momentum', path: '/dev/match-momentum', description: 'Match momentum visualization (Slide 2)' },
+    { name: 'Service Stats', path: '/dev/service-stats', description: 'Service statistics (Slide 3)' },
     { name: 'Screensaver', path: '/dev/screensaver', description: 'Advertising screensaver' },
   ];
 
