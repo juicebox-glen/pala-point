@@ -77,6 +77,10 @@
     user-select: none;
     box-shadow: 0 0 1vw rgba(208, 255, 20, 0.6);
     transform: translate(-50%, -50%);
+    will-change: left, top; /* Hint browser to optimize for animation */
+    /* Use GPU acceleration */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
   
   /* Text overlay */
@@ -98,6 +102,12 @@
     margin: 0;
     text-transform: uppercase;
     font-family: var(--font-family);
+  }
+  
+  /* Smaller font size for "SELECTING SERVER" phase */
+  .server-announcement-title-selecting {
+    font-size: 6.5vw;
+    line-height: 1.2;
   }
   
   /* Instruction text */
