@@ -19,12 +19,12 @@
   
   /* Team A (left side) positions */
   .server-announcement-player-team-a-top {
-    left: 30%;
-    top: 18%;
+    left: 34%;
+    top: 12%;
   }
   
   .server-announcement-player-team-a-bottom {
-    left: 19%;
+    left: 16%;
     top: 71%;
   }
   
@@ -54,7 +54,7 @@
   
   /* Ball positioning for each team */
   .server-announcement-ball-team-a {
-    left: calc(20% + 6vw);
+    left: calc(20% + 4.2vw);
     top: calc(65% + 3vw);
   }
   
@@ -75,7 +75,8 @@
     z-index: var(--z-overlay);
     transition: none;
     user-select: none;
-    box-shadow: 0 0 1vw rgba(208, 255, 20, 0.6);
+    /* Reduced box-shadow for better performance on low-end devices */
+    box-shadow: 0 0 0.5vw rgba(208, 255, 20, 0.4);
     transform: translate(-50%, -50%);
     will-change: left, top; /* Hint browser to optimize for animation */
     /* Use GPU acceleration */
@@ -95,27 +96,18 @@
   
   /* Title */
   .server-announcement-title {
-    font-size: var(--font-size-screen-title);
+    font-size: 6.5vw;
     font-weight: 600;
     color: var(--color-text-primary);
     letter-spacing: var(--letter-spacing-normal);
     margin: 0;
     text-transform: uppercase;
     font-family: var(--font-family);
+    line-height: 1.2;
   }
   
   /* Smaller font size for "SELECTING SERVER" phase */
   .server-announcement-title-selecting {
     font-size: 6.5vw;
     line-height: 1.2;
-  }
-  
-  /* Instruction text */
-  .server-announcement-instruction {
-    font-size: var(--font-size-instruction);
-    color: var(--color-text-secondary);
-    text-align: center;
-    margin-top: var(--spacing-sm);
-    z-index: var(--z-overlay);
-    animation: fadeIn 1.1s ease-in-out;
   }

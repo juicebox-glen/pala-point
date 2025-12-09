@@ -31,7 +31,8 @@ export default function ServerSelectionDevPage() {
       // Update ref for next frame
       ballPositionRef.current = { x: newX, y: newY };
 
-      // Direct DOM manipulation (avoids React re-renders - major performance boost)
+      // Use left/top with percentages - simpler and works correctly
+      // Still using direct DOM manipulation to avoid React re-renders
       ballElement.style.left = `${newX}%`;
       ballElement.style.top = `${newY}%`;
 
@@ -81,10 +82,6 @@ export default function ServerSelectionDevPage() {
           <div
             ref={ballElementRef}
             className="server-announcement-bouncing-ball"
-            style={{
-              left: '50%',
-              top: '50%',
-            }}
           />
         </div>
       </div>

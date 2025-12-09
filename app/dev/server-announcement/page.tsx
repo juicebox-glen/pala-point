@@ -79,9 +79,10 @@ export default function ServerAnnouncementDevPage() {
           {/* Text */}
           <div className="content-centered">
             <div className="server-announcement-text-overlay">
-              <h1 className="server-announcement-title">TEAM {server} TO SERVE</h1>
+              <h1 className="server-announcement-title">
+                TEAM {server}<br />TO SERVE
+              </h1>
             </div>
-            <p className="server-announcement-instruction">Game on. Press button to begin</p>
           </div>
         </div>
       </div>
