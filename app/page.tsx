@@ -48,6 +48,7 @@ export default function SetupPage() {
   const keyDownRef = useRef(false);
   const isHoldingRef = useRef(false); // Track holding state with ref for immediate checks
   const holdCompletedRef = useRef(false); // Prevent multiple completions
+  const holdCooldownRef = useRef(false); // Prevent key events after hold completes
 
   // Cancel hold timer
   const cancelHold = useCallback(() => {
@@ -151,6 +152,9 @@ export default function SetupPage() {
       progressIntervalRef.current = null;
     }
     
+    // Set cooldown to prevent key release from triggering actions on next screen
+    holdCooldownRef.current = true;
+    
     // Reset state
     keyDownRef.current = false;
     isHoldingRef.current = false;
@@ -160,6 +164,11 @@ export default function SetupPage() {
     // Call confirm after a brief delay to ensure UI updates
     setTimeout(() => {
       handleConfirm();
+      
+      // Clear cooldown after navigation completes (300ms should be enough)
+      setTimeout(() => {
+        holdCooldownRef.current = false;
+      }, 300);
     }, 0);
   }, [handleConfirm]);
 
@@ -172,10 +181,7 @@ export default function SetupPage() {
     holdCompletedRef.current = false;
     isHoldingRef.current = true;
     setIsHolding(true);
-    
-    // Set initial progress immediately for instant visual feedback
-    // This eliminates the delay before the first animation frame
-    setHoldProgress(1); // Start with a small visible amount for immediate feedback
+    setHoldProgress(0);
     
     const startTime = performance.now(); // Use performance.now() for higher precision
 
@@ -199,10 +205,12 @@ export default function SetupPage() {
       }
     };
 
-    // Start immediately with requestAnimationFrame for smooth animation
-    // The initial 1% progress ensures visual feedback is instant
-    const initialFrameId = requestAnimationFrame(updateProgress);
-    progressIntervalRef.current = initialFrameId;
+    // Use double requestAnimationFrame to ensure we're at the start of a frame
+    // This reduces visual glitches and provides smoother initial animation
+    requestAnimationFrame(() => {
+      const initialFrameId = requestAnimationFrame(updateProgress);
+      progressIntervalRef.current = initialFrameId;
+    });
   }, [completeHold]);
 
   // Register activity for screensaver
@@ -242,6 +250,13 @@ export default function SetupPage() {
   // Keyboard controls (disabled when dialog is showing)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore all key events during cooldown period (after hold completes)
+      if (holdCooldownRef.current) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      
       registerActivity();
       
       // Only handle if dialog is NOT showing
@@ -261,6 +276,13 @@ export default function SetupPage() {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      // Ignore all key events during cooldown period (after hold completes)
+      if (holdCooldownRef.current) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      
       // Only handle if dialog is NOT showing
       if (showResumeDialog) return;
       
@@ -290,6 +312,7 @@ export default function SetupPage() {
     keyDownRef.current = false;
     isHoldingRef.current = false;
     holdCompletedRef.current = false;
+    // Note: Don't reset holdCooldownRef here - it needs to persist through step changes
   }, [step, cancelHold]);
 
   // Write state when on setup screen
@@ -317,6 +340,7 @@ export default function SetupPage() {
     keyDownRef.current = false;
     isHoldingRef.current = false;
     holdCompletedRef.current = false;
+    holdCooldownRef.current = false;
     setHoldProgress(0);
     setIsHolding(false);
     
@@ -340,6 +364,7 @@ export default function SetupPage() {
         keyDownRef.current = false;
         isHoldingRef.current = false;
         holdCompletedRef.current = false;
+        holdCooldownRef.current = false;
         setHoldProgress(0);
         setIsHolding(false);
       }
@@ -358,6 +383,7 @@ export default function SetupPage() {
       keyDownRef.current = false;
       isHoldingRef.current = false;
       holdCompletedRef.current = false;
+      holdCooldownRef.current = false;
       setHoldProgress(0);
       setIsHolding(false);
     };
@@ -411,6 +437,7 @@ export default function SetupPage() {
       }
       isHoldingRef.current = false;
       holdCompletedRef.current = false;
+      holdCooldownRef.current = false;
       keyDownRef.current = false;
     };
   }, []);

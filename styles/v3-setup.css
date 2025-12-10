@@ -37,13 +37,16 @@
   left: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.25);
-  /* Reduced transition time for smoother, more responsive feel */
-  transition: width 0.03s linear;
+  /* No transition for instant updates - eliminates visual glitches */
+  transition: none;
   z-index: 0;
   pointer-events: none;
   /* Force hardware acceleration */
   will-change: width;
   transform: translateZ(0);
+  /* Prevent subpixel rendering issues */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Typography */
