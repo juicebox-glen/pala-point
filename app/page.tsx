@@ -172,9 +172,12 @@ export default function SetupPage() {
     holdCompletedRef.current = false;
     isHoldingRef.current = true;
     setIsHolding(true);
-    setHoldProgress(0);
     
-    const startTime = Date.now();
+    // Set initial progress immediately for instant visual feedback
+    // This eliminates the delay before the first animation frame
+    setHoldProgress(1); // Start with a small visible amount for immediate feedback
+    
+    const startTime = performance.now(); // Use performance.now() for higher precision
 
     const updateProgress = () => {
       // Check if we should continue (might have been cancelled)
@@ -182,7 +185,7 @@ export default function SetupPage() {
         return;
       }
       
-      const elapsed = Date.now() - startTime;
+      const elapsed = performance.now() - startTime;
       const progress = Math.min((elapsed / HOLD_DURATION) * 100, 100);
       setHoldProgress(progress);
       
@@ -196,7 +199,8 @@ export default function SetupPage() {
       }
     };
 
-    // Start the animation loop and store the initial frame ID
+    // Start immediately with requestAnimationFrame for smooth animation
+    // The initial 1% progress ensures visual feedback is instant
     const initialFrameId = requestAnimationFrame(updateProgress);
     progressIntervalRef.current = initialFrameId;
   }, [completeHold]);
