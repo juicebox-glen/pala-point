@@ -44,15 +44,24 @@ export default function SetupPage() {
   // Hold-to-select state
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<number | NodeJS.Timeout | null>(null);
   const keyDownRef = useRef(false);
+  const isHoldingRef = useRef(false); // Track holding state with ref for immediate checks
+  const holdCompletedRef = useRef(false); // Prevent multiple completions
 
   // Cancel hold timer
   const cancelHold = useCallback(() => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
+    if (progressIntervalRef.current !== null) {
+      // Cancel animation frame if it's a number, otherwise clear interval
+      if (typeof progressIntervalRef.current === 'number') {
+        cancelAnimationFrame(progressIntervalRef.current);
+      } else {
+        clearInterval(progressIntervalRef.current);
+      }
       progressIntervalRef.current = null;
     }
+    isHoldingRef.current = false;
+    holdCompletedRef.current = false;
     setIsHolding(false);
     setHoldProgress(0);
   }, []);
@@ -128,30 +137,69 @@ export default function SetupPage() {
 
   // Complete hold action
   const completeHold = useCallback(() => {
+    // Prevent multiple completions
+    if (holdCompletedRef.current) return;
+    holdCompletedRef.current = true;
+    
+    // Cancel any ongoing animation first
+    if (progressIntervalRef.current !== null) {
+      if (typeof progressIntervalRef.current === 'number') {
+        cancelAnimationFrame(progressIntervalRef.current);
+      } else {
+        clearInterval(progressIntervalRef.current);
+      }
+      progressIntervalRef.current = null;
+    }
+    
+    // Reset state
     keyDownRef.current = false;
-    cancelHold();
-    handleConfirm();
-  }, [cancelHold, handleConfirm]);
+    isHoldingRef.current = false;
+    setIsHolding(false);
+    setHoldProgress(100);
+    
+    // Call confirm after a brief delay to ensure UI updates
+    setTimeout(() => {
+      handleConfirm();
+    }, 0);
+  }, [handleConfirm]);
 
   // Start hold timer
   const startHold = useCallback(() => {
-    if (isHolding) return;
+    // Use ref for immediate check to prevent race conditions
+    if (isHoldingRef.current) return;
     
+    // Reset completion flag
+    holdCompletedRef.current = false;
+    isHoldingRef.current = true;
     setIsHolding(true);
     setHoldProgress(0);
     
     const startTime = Date.now();
 
-    progressIntervalRef.current = setInterval(() => {
+    const updateProgress = () => {
+      // Check if we should continue (might have been cancelled)
+      if (!isHoldingRef.current || holdCompletedRef.current) {
+        return;
+      }
+      
       const elapsed = Date.now() - startTime;
       const progress = Math.min((elapsed / HOLD_DURATION) * 100, 100);
       setHoldProgress(progress);
       
       if (progress >= 100) {
+        // Complete the hold
         completeHold();
+      } else {
+        // Schedule next frame and store the ID
+        const frameId = requestAnimationFrame(updateProgress);
+        progressIntervalRef.current = frameId;
       }
-    }, 16); // ~60fps
-  }, [isHolding, completeHold]);
+    };
+
+    // Start the animation loop and store the initial frame ID
+    const initialFrameId = requestAnimationFrame(updateProgress);
+    progressIntervalRef.current = initialFrameId;
+  }, [completeHold]);
 
   // Register activity for screensaver
   const registerActivity = useCallback(() => {
@@ -200,7 +248,8 @@ export default function SetupPage() {
       if (key === 'q' || key === 'p') {
         handleToggle();
       } else if (key === 'r') {
-        if (!keyDownRef.current) {
+        // Only start if key is not already down and we're not already holding
+        if (!keyDownRef.current && !isHoldingRef.current) {
           keyDownRef.current = true;
           startHold();
         }
@@ -229,6 +278,15 @@ export default function SetupPage() {
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, [handleToggle, startHold, cancelHold, showResumeDialog, registerActivity]);
+
+  // Reset hold state when step changes to prevent carryover
+  useEffect(() => {
+    // Cancel any active hold when transitioning between steps
+    cancelHold();
+    keyDownRef.current = false;
+    isHoldingRef.current = false;
+    holdCompletedRef.current = false;
+  }, [step, cancelHold]);
 
   // Write state when on setup screen
   useEffect(() => {
@@ -271,9 +329,17 @@ export default function SetupPage() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
+      if (progressIntervalRef.current !== null) {
+        if (typeof progressIntervalRef.current === 'number') {
+          cancelAnimationFrame(progressIntervalRef.current);
+        } else {
+          clearInterval(progressIntervalRef.current);
+        }
+        progressIntervalRef.current = null;
       }
+      isHoldingRef.current = false;
+      holdCompletedRef.current = false;
+      keyDownRef.current = false;
     };
   }, []);
 
@@ -620,7 +686,7 @@ function GameTypeScreen({
 }) {
   return (
     <div className="screen-content layout-split-50-vertical">
-      <div className={`tile ${selected === 'quick-play' ? 'selected' : ''}`}>
+      <div className={`tile ${selected === 'quick-play' || (selected === 'quick-play' && isHolding) ? 'selected' : ''}`}>
         {selected === 'quick-play' && isHolding && (
           <div 
             className="hold-progress-fill"
@@ -629,7 +695,7 @@ function GameTypeScreen({
         )}
         <div className="setup-title">QUICK PLAY</div>
       </div>
-      <div className={`tile ${selected === 'custom' ? 'selected' : ''}`}>
+      <div className={`tile ${selected === 'custom' || (selected === 'custom' && isHolding) ? 'selected' : ''}`}>
         {selected === 'custom' && isHolding && (
           <div 
             className="hold-progress-fill"
@@ -662,7 +728,7 @@ function DeuceRuleScreen({
       {options.map((option) => (
         <div
           key={option.value}
-          className={`tile ${selected === option.value ? 'selected' : ''}`}
+          className={`tile ${selected === option.value || (selected === option.value && isHolding) ? 'selected' : ''}`}
         >
           {selected === option.value && isHolding && (
             <div 
@@ -688,25 +754,23 @@ function SetsScreen({
 }) {
   return (
     <div className="screen-content layout-split-50-vertical">
-      <div className={`tile ${selected === 1 ? 'selected' : ''}`}>
+      <div className={`tile ${selected === 1 || (selected === 1 && isHolding) ? 'selected' : ''}`}>
         {selected === 1 && isHolding && (
           <div 
             className="hold-progress-fill"
             style={{ width: `${holdProgress}%` }}
           />
         )}
-        <div className="setup-number">1</div>
-        <div className="setup-label">SET</div>
+        <div className="setup-title">1 SET</div>
       </div>
-      <div className={`tile ${selected === 3 ? 'selected' : ''}`}>
+      <div className={`tile ${selected === 3 || (selected === 3 && isHolding) ? 'selected' : ''}`}>
         {selected === 3 && isHolding && (
           <div 
             className="hold-progress-fill"
             style={{ width: `${holdProgress}%` }}
           />
         )}
-        <div className="setup-number">3</div>
-        <div className="setup-label">SETS</div>
+        <div className="setup-title">3 SETS</div>
       </div>
     </div>
   );
@@ -723,7 +787,7 @@ function TiebreakScreen({
 }) {
   return (
     <div className="screen-content layout-split-50-vertical">
-      <div className={`tile ${selected === 'tiebreak' ? 'selected' : ''}`}>
+      <div className={`tile ${selected === 'tiebreak' || (selected === 'tiebreak' && isHolding) ? 'selected' : ''}`}>
         {selected === 'tiebreak' && isHolding && (
           <div 
             className="hold-progress-fill"
@@ -732,7 +796,7 @@ function TiebreakScreen({
         )}
         <div className="setup-title">TIEBREAK</div>
       </div>
-      <div className={`tile ${selected === 'play-on' ? 'selected' : ''}`}>
+      <div className={`tile ${selected === 'play-on' || (selected === 'play-on' && isHolding) ? 'selected' : ''}`}>
         {selected === 'play-on' && isHolding && (
           <div 
             className="hold-progress-fill"
@@ -770,17 +834,21 @@ function SummaryScreen({
 
   return (
     <div className="screen-content">
-      {isHolding && (
-        <div 
-          className="hold-progress-fill"
-          style={{ width: `${holdProgress}%` }}
-        />
-      )}
       <div className="content-centered">
-        <div className="setup-summary-content">
-          <div className="setup-summary-line">{getDeuceLabel(config.deuceRule)}</div>
-          <div className="setup-summary-line">{getSetsLabel(config.setsTarget)}</div>
-          <div className="setup-summary-line">{getTiebreakLabel(config.setTieRule)}</div>
+        <div className="setup-summary-container">
+          <div className={`tile setup-summary-tile ${isHolding ? 'selected' : ''}`}>
+            {isHolding && (
+              <div 
+                className="hold-progress-fill"
+                style={{ width: `${holdProgress}%` }}
+              />
+            )}
+            <div className="setup-summary-content">
+              <div className="setup-summary-line">{getDeuceLabel(config.deuceRule)}</div>
+              <div className="setup-summary-line">{getSetsLabel(config.setsTarget)}</div>
+              <div className="setup-summary-line">{getTiebreakLabel(config.setTieRule)}</div>
+            </div>
+          </div>
           <div className="setup-summary-action">HOLD TO START GAME</div>
         </div>
       </div>

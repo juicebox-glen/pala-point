@@ -45,28 +45,28 @@
 
 /* Left side top position */
 .side-swap-left-top {
-  top: 25%;
+  top:10%;
   left: 20%;
   animation-name: swapLeftToRight;
 }
 
 /* Left side bottom position */
 .side-swap-left-bottom {
-  bottom: 25%;
+  bottom: 10%;
   left: 20%;
   animation-name: swapLeftToRight;
 }
 
 /* Right side top position */
 .side-swap-right-top {
-  top: 25%;
+  top: 10%;
   right: 20%;
   animation-name: swapRightToLeft;
 }
 
 /* Right side bottom position */
 .side-swap-right-bottom {
-  bottom: 25%;
+  bottom: 10%;
   right: 20%;
   animation-name: swapRightToLeft;
 }
@@ -89,23 +89,24 @@
   }
 }
 
-/* Text overlay */
+/* Text overlay - uses shared padding variable */
 .side-swap-text-overlay {
   background-color: var(--color-bg-dark);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--padding-text-overlay);
   text-align: center;
   display: inline-block;
   z-index: 10;
   animation: fadeIn 0.5s ease-in;
 }
 
-/* Title */
+/* Title - matches server-announcement-title (uses shared font-size-large-title variable) */
 .side-swap-title {
-  font-size: var(--font-size-screen-title);
+  font-size: var(--font-size-large-title);
   font-weight: 600;
   color: var(--color-text-primary);
   letter-spacing: var(--letter-spacing-normal);
   margin: 0;
   text-transform: uppercase;
   font-family: var(--font-family);
+  line-height: 1.2;
 }

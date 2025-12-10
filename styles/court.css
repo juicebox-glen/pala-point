@@ -46,14 +46,14 @@
   /* ===== TEXT OVERLAYS ===== */
   .text-overlay {
     background-color: var(--color-bg-dark);
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--padding-text-overlay);
     text-align: center;
     display: inline-block;
     z-index: var(--z-overlay);
   }
   
   .text-overlay-large {
-    padding: var(--spacing-md) var(--spacing-lg);
+    padding: var(--padding-text-overlay);
   }
   
   /* ===== SCREEN TITLES ===== */

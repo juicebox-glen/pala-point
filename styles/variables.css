@@ -35,6 +35,9 @@
   --spacing-lg: 4vw;
   --spacing-xl: 6vw;
   
+  /* Text Overlay Padding - shared by all text overlay boxes */
+  --padding-text-overlay: 4vw;
+  
   /* Border Radius */
   --border-radius-sm: 0.5vw;
   --border-radius-md: 0.8vw;
@@ -83,6 +86,7 @@
   /* Font Sizes - Screen Specific */
   --font-size-screen-title: 3.5vw;
   --font-size-instruction: 2vw;
+  --font-size-large-title: 6.2vw; /* Shared by server announcement and side swap titles */
   
   /* Z-Index Layers */
   --z-background: 1;

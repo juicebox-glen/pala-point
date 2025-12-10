@@ -511,8 +511,8 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
 
         {/* Point Situation Indicator - Only show SET POINT, MATCH POINT, TIE BREAK */}
         {view.statusMessage && 
-         (view.statusMessage.includes('SET POINT') || 
-          view.statusMessage.includes('MATCH POINT') || 
+         (view.statusMessage.includes('SET') || 
+          view.statusMessage.includes('MATCH') || 
           view.statusMessage.includes('TIE') ||
           view.statusMessage.includes('BREAK')) && (
           <div className="point-situation-overlay">

@@ -71,7 +71,7 @@ export default function SideSwap({ onComplete }: SideSwapProps) {
         {/* Text overlay */}
         <div className="content-centered">
           <div className="side-swap-text-overlay">
-            <h1 className="side-swap-title">SWAP SIDES</h1>
+            <h1 className="side-swap-title">SWAP<br />SIDES</h1>
           </div>
         </div>
       </div>

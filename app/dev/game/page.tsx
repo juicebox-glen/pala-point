@@ -21,9 +21,9 @@ const PRESET_STATES: Record<string, GameState> = {
   '30-30': { pointsA: '30', pointsB: '30', gamesA: 2, gamesB: 1, setsA: 0, setsB: 0, server: 'B', sidesSwapped: false },
   'deuce': { pointsA: '40', pointsB: '40', gamesA: 3, gamesB: 3, setsA: 0, setsB: 0, server: 'A', sidesSwapped: false },
   'advantage-a': { pointsA: 'ADV', pointsB: '40', gamesA: 4, gamesB: 4, setsA: 0, setsB: 0, server: 'A', sidesSwapped: false },
-  'set-point': { pointsA: '40', pointsB: '30', gamesA: 5, gamesB: 4, setsA: 0, setsB: 0, server: 'A', sidesSwapped: false, statusMessage: 'SET POINT\nTEAM A' },
-  'match-point': { pointsA: '40', pointsB: '15', gamesA: 5, gamesB: 3, setsA: 1, setsB: 0, server: 'A', sidesSwapped: false, statusMessage: 'MATCH POINT\nTEAM A' },
-  'tiebreak': { pointsA: '3', pointsB: '4', gamesA: 6, gamesB: 6, setsA: 0, setsB: 0, server: 'B', sidesSwapped: false, statusMessage: 'TIE BREAK' },
+  'set-point': { pointsA: '40', pointsB: '30', gamesA: 5, gamesB: 4, setsA: 0, setsB: 0, server: 'A', sidesSwapped: false, statusMessage: 'SET\nPOINT' },
+  'match-point': { pointsA: '40', pointsB: '15', gamesA: 5, gamesB: 3, setsA: 1, setsB: 0, server: 'A', sidesSwapped: false, statusMessage: 'MATCH\nPOINT' },
+  'tiebreak': { pointsA: '3', pointsB: '4', gamesA: 6, gamesB: 6, setsA: 0, setsB: 0, server: 'B', sidesSwapped: false, statusMessage: 'TIE\nBREAK' },
   'swapped': { pointsA: '15', pointsB: '30', gamesA: 2, gamesB: 1, setsA: 0, setsB: 0, server: 'A', sidesSwapped: true },
 };
 

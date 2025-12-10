@@ -37,9 +37,13 @@
   left: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.25);
-  transition: width 0.075s linear;
+  /* Reduced transition time for smoother, more responsive feel */
+  transition: width 0.03s linear;
   z-index: 0;
   pointer-events: none;
+  /* Force hardware acceleration */
+  will-change: width;
+  transform: translateZ(0);
 }
 
 /* Typography */
@@ -100,6 +104,22 @@
 }
 
 /* Summary Screen */
+.setup-summary-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4vw;
+  position: relative;
+  z-index: 1;
+}
+
+.setup-summary-tile {
+  width: auto;
+  min-width: 50vw;
+  padding: 6vw 8vw;
+  position: relative;
+}
+
 .setup-summary-content {
   display: flex;
   flex-direction: column;
@@ -111,10 +131,14 @@
 
 .setup-summary-line {
   font-size: 6vw;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  letter-spacing: var(--letter-spacing-normal);
+  font-weight: 700;
+  color: #9CA3AF;
+  letter-spacing: 0.1em;
   text-align: center;
+  transition: color 0.15s ease, filter 0.15s ease;
+  position: relative;
+  z-index: 1;
+  will-change: color, filter;
   animation: fadeInUp 0.6s ease-out backwards;
 }
 
@@ -122,13 +146,17 @@
 .setup-summary-line:nth-child(2) { animation-delay: 0.2s; }
 .setup-summary-line:nth-child(3) { animation-delay: 0.3s; }
 
+.setup-summary-tile.selected .setup-summary-line {
+  color: #FFFFFF;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
 .setup-summary-action {
   font-size: 3vw;
   font-weight: 600;
   color: var(--color-primary);
   letter-spacing: var(--letter-spacing-normal);
   text-align: center;
-  margin-top: 6vw;
   animation: pulse 2s ease-in-out infinite;
 }
 

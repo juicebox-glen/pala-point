@@ -489,15 +489,14 @@ export function formatDisplay(s: EngineState, rules?: MatchRules): DisplayModel 
 
   let statusMessage = "";
   if (pointSituation) {
-    const team = pointSituation.team === 'A' ? 'Team A' : 'Team B';
     statusMessage = pointSituation.type === 'match-point' 
-      ? `MATCH POINT - ${team}` 
-      : `SET POINT - ${team}`;
+      ? `MATCH\nPOINT` 
+      : `SET\nPOINT`;
   }
 
   if (s.currentGame.inTiebreak && set.tiebreak) {
     if (!statusMessage) {
-      statusMessage = "Tiebreak";
+      statusMessage = "TIE\nBREAK";
     }
 
     return {

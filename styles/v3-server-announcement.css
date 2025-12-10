@@ -30,13 +30,13 @@
   
   /* Team B (right side) positions */
   .server-announcement-player-team-b-top {
-    right: 19%;
+    right: 16%;
     bottom: 71%;
   }
   
   .server-announcement-player-team-b-bottom {
-    right: 30%;
-    bottom: 18%;
+    right: 34%;
+    bottom: 12%;
   }
   
   /* Tennis ball (small, Phase 2) */
@@ -59,7 +59,7 @@
   }
   
   .server-announcement-ball-team-b {
-    right: calc(20% + 6vw);
+    right: calc(20% + 4.2vw);
     bottom: calc(65% + 3vw);
   }
   
@@ -84,19 +84,19 @@
     -webkit-backface-visibility: hidden;
   }
   
-  /* Text overlay */
+  /* Text overlay - uses shared padding variable */
   .server-announcement-text-overlay {
     background-color: var(--color-bg-dark);
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--padding-text-overlay);
     text-align: center;
     display: inline-block;
     z-index: var(--z-overlay);
     animation: fadeIn 0.5s ease-in-out;
   }
   
-  /* Title */
+  /* Title - uses shared font-size-large-title variable */
   .server-announcement-title {
-    font-size: 6.5vw;
+    font-size: var(--font-size-large-title);
     font-weight: 600;
     color: var(--color-text-primary);
     letter-spacing: var(--letter-spacing-normal);
@@ -106,8 +106,8 @@
     line-height: 1.2;
   }
   
-  /* Smaller font size for "SELECTING SERVER" phase */
+  /* Selecting phase - same as base title */
   .server-announcement-title-selecting {
-    font-size: 6.5vw;
+    font-size: var(--font-size-large-title);
     line-height: 1.2;
   }
