@@ -299,6 +299,74 @@ export default function SetupPage() {
     }
   }, [step]);
 
+  // Reset all hold state on mount (when navigating back from game)
+  useEffect(() => {
+    // Ensure all hold-related state is completely reset
+    if (progressIntervalRef.current !== null) {
+      if (typeof progressIntervalRef.current === 'number') {
+        cancelAnimationFrame(progressIntervalRef.current);
+      } else {
+        clearInterval(progressIntervalRef.current);
+      }
+      progressIntervalRef.current = null;
+    }
+    keyDownRef.current = false;
+    isHoldingRef.current = false;
+    holdCompletedRef.current = false;
+    setHoldProgress(0);
+    setIsHolding(false);
+    
+    // Reset step to game-type when returning to setup
+    setStep('game-type');
+  }, []); // Run only on mount
+
+  // Reset hold state when page becomes visible (handles navigation back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Reset all hold state when page becomes visible
+        if (progressIntervalRef.current !== null) {
+          if (typeof progressIntervalRef.current === 'number') {
+            cancelAnimationFrame(progressIntervalRef.current);
+          } else {
+            clearInterval(progressIntervalRef.current);
+          }
+          progressIntervalRef.current = null;
+        }
+        keyDownRef.current = false;
+        isHoldingRef.current = false;
+        holdCompletedRef.current = false;
+        setHoldProgress(0);
+        setIsHolding(false);
+      }
+    };
+
+    const handleFocus = () => {
+      // Also reset on window focus (catches navigation back)
+      if (progressIntervalRef.current !== null) {
+        if (typeof progressIntervalRef.current === 'number') {
+          cancelAnimationFrame(progressIntervalRef.current);
+        } else {
+          clearInterval(progressIntervalRef.current);
+        }
+        progressIntervalRef.current = null;
+      }
+      keyDownRef.current = false;
+      isHoldingRef.current = false;
+      holdCompletedRef.current = false;
+      setHoldProgress(0);
+      setIsHolding(false);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
   // Check for saved game on mount
   useEffect(() => {
     const hasSavedGame = restoreSavedGame();
