@@ -7,8 +7,9 @@ export async function POST(req: NextRequest) {
     const { court_id, mode, team1_score, team2_score, duration_seconds, started_at, ended_at } = body;
 
     // Get Supabase credentials from environment
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    // Using service role key for backend API route (bypasses RLS)
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 });
