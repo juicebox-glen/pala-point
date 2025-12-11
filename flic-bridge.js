@@ -1,4 +1,6 @@
+// Load .env.local first (venue-specific), then .env (defaults)
 try {
+  require('dotenv').config({ path: '.env.local' });
   require('dotenv').config();
 } catch (e) {
   // dotenv not available, using system environment variables

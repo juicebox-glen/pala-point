@@ -1,4 +1,6 @@
 const fetch = require('node-fetch');
+// Load .env.local first (venue-specific), then .env (defaults)
+require('dotenv').config({ path: '../.env.local' });
 require('dotenv').config({ path: '../.env' });
 
 // Validate required environment variables
