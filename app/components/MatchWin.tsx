@@ -256,26 +256,23 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
           <div className="content-centered">
           {/* Slide 0: Match Result */}
           {currentSlide === 0 && (
-            <div className="match-win-content">
+            <div className="match-win-text-overlay">
               <h1 className="match-win-title">{winnerName} WINS!</h1>
               
               {/* Set scores */}
               <div className="match-win-sets">
                 {completedSets.map((set, index) => {
                   const setNumber = index + 1;
-                  let scoreDisplay = '';
-                  
-                  if (set.tiebreak) {
-                    // Tiebreak score
-                    scoreDisplay = `${set.gamesA}-${set.gamesB} (${set.tiebreak.a}-${set.tiebreak.b})`;
-                  } else {
-                    // Regular set score
-                    scoreDisplay = `${set.gamesA}-${set.gamesB}`;
-                  }
+                  // Extract main score (remove tiebreak if present)
+                  const mainScore = `${set.gamesA}-${set.gamesB}`;
+                  const [scoreA, scoreB] = mainScore.split('-');
+                  const isThreeSets = completedSets.length === 3;
                   
                   return (
-                    <div key={setNumber} className="match-win-set-score">
-                      {scoreDisplay}
+                    <div key={setNumber} className={`match-win-set-score ${isThreeSets ? 'three-sets' : ''}`}>
+                      <span className="match-win-score-value">{scoreA}</span>
+                      <span className="match-win-score-dash">-</span>
+                      <span className="match-win-score-value">{scoreB}</span>
                     </div>
                   );
                 })}

@@ -47,7 +47,7 @@
   --font-size-small: 1.6vw;
   --font-size-medium: 2vw;
   --font-size-large: 2.5vw;
-  --font-size-xlarge: 3.5vw;
+  --font-size-xlarge: 3.7vw;
   --font-size-huge: 6vw;
   --font-size-massive: 26vw;
   
@@ -86,7 +86,7 @@
   /* Font Sizes - Screen Specific */
   --font-size-screen-title: 3.5vw;
   --font-size-instruction: 2vw;
-  --font-size-large-title: 6.2vw; /* Shared by server announcement and side swap titles */
+  --font-size-large-title: 6vw; /* Shared by server announcement and side swap titles */
   
   /* Z-Index Layers */
   --z-background: 1;

@@ -47,16 +47,24 @@ export default function SetWin({ winningTeam, setNumber, gamesScore, onComplete 
   const teamName = winningTeam === 'A' ? 'TEAM A' : 'TEAM B';
   const borderColor = winningTeam === 'A' ? 'var(--color-team-1)' : 'var(--color-team-2)';
 
+  // Extract main score (remove tiebreak if present)
+  // Format can be "6-0" or "7-6 (7-5)" - we want just "7-6"
+  const mainScore = gamesScore.split(' ')[0]; // Get part before space (removes tiebreak)
+  const [scoreA, scoreB] = mainScore.split('-');
+
   return (
     <div className="screen-wrapper">
       <div className="screen-content screen-bordered" style={{ borderColor }}>
         <div className="screen-border" style={{ borderColor }} />
         
         <div className="content-centered">
-          <div className="set-win-content">
+          <div className="set-win-text-overlay">
             <h1 className="set-win-title">{teamName} WINS SET {setNumber}</h1>
-            <div className="set-win-score">{gamesScore}</div>
-            <div className="set-win-countdown">{countdown}</div>
+            <div className="set-win-score">
+              <span className="set-win-score-value">{scoreA}</span>
+              <span className="set-win-score-dash">-</span>
+              <span className="set-win-score-value">{scoreB}</span>
+            </div>
           </div>
         </div>
       </div>

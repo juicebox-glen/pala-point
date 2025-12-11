@@ -924,7 +924,7 @@ function SummaryScreen({
   };
 
   const getSetsLabel = (sets: 1 | 3) => {
-    return sets === 1 ? '1 SET' : '3 SETS';
+    return sets === 1 ? '1 SET' : '3 SET';
   };
 
   const getTiebreakLabel = (rule: SetTieRule) => {
@@ -932,24 +932,24 @@ function SummaryScreen({
   };
 
   return (
-    <div className="screen-content">
-      <div className="content-centered">
-        <div className="setup-summary-container">
-          <div className={`tile setup-summary-tile ${isHolding ? 'selected' : ''}`}>
-            {isHolding && (
-              <div 
-                className="hold-progress-fill"
-                style={{ width: `${holdProgress}%` }}
-              />
-            )}
-            <div className="setup-summary-content">
-              <div className="setup-summary-line">{getDeuceLabel(config.deuceRule)}</div>
-              <div className="setup-summary-line">{getSetsLabel(config.setsTarget)}</div>
-              <div className="setup-summary-line">{getTiebreakLabel(config.setTieRule)}</div>
-            </div>
-          </div>
-          <div className="setup-summary-action">HOLD TO START GAME</div>
+    <div className="screen-content layout-split-33-vertical">
+      {/* Combined first two sections showing selected options */}
+      <div className="tile setup-summary-options">
+        <div className="setup-summary-content">
+          <div className="setup-summary-line">{getDeuceLabel(config.deuceRule)}</div>
+          <div className="setup-summary-line">{getSetsLabel(config.setsTarget)}</div>
+          <div className="setup-summary-line">{getTiebreakLabel(config.setTieRule)}</div>
         </div>
+      </div>
+      {/* Green bar section with hold to start */}
+      <div className={`tile setup-summary-start ${isHolding ? 'selected' : ''}`}>
+        {isHolding && (
+          <div 
+            className="hold-progress-fill"
+            style={{ width: `${holdProgress}%` }}
+          />
+        )}
+        <div className="setup-title">HOLD TO START</div>
       </div>
     </div>
   );

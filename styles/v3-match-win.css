@@ -1,36 +1,60 @@
 /* V3 Match Win Styles */
 
-.match-win-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-xl);
-  }
-  
-  .match-win-title {
-    font-size: calc(var(--font-size-screen-title) * 1.2);
-    font-weight: 700;
-    color: var(--color-text-primary);
-    letter-spacing: var(--letter-spacing-wide);
-    text-align: center;
-    margin: 0;
-    text-transform: uppercase;
-  }
-  
-  .match-win-sets {
-    display: flex;
-    gap: var(--spacing-lg);
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .match-win-set-score {
-    font-size: 10vw;
-    font-weight: 700;
-    color: var(--color-text-primary);
-    letter-spacing: var(--letter-spacing-normal);
-  }
+.match-win-text-overlay {
+  background-color: var(--color-bg-dark);
+  padding: var(--padding-text-overlay);
+  text-align: center;
+  display: inline-block;
+  z-index: var(--z-overlay);
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.match-win-title {
+  font-size: 4.5vw;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: var(--letter-spacing-normal);
+  text-align: center;
+  margin: 0;
+  text-transform: uppercase;
+  font-family: var(--font-family);
+  line-height: 1.2;
+  margin-bottom: var(--spacing-sm);
+}
+
+.match-win-sets {
+  display: flex;
+  gap: var(--spacing-lg);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.match-win-set-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1vw;
+  font-size: 15vw;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: var(--letter-spacing-normal);
+  position: relative;
+}
+
+.match-win-set-score.three-sets {
+  font-size: 10vw; /* Reduced size for 3 sets */
+}
+
+.match-win-score-value {
+  flex: 0 0 auto;
+}
+
+.match-win-score-dash {
+  flex: 0 0 auto;
+  /* Dash is centered by flexbox alignment */
+  position: relative;
+}
   
   .match-win-footer {
     position: absolute;
@@ -75,22 +99,23 @@
     grid-auto-rows: minmax(20vh, auto);
     gap: 0;
     width: 100%;
-    max-width: 85vw;
+    max-width: 65vw;
     margin: 0 auto;
   }
   
   .stat-card {
-    background-color: var(--color-bg-primary);
-    padding: var(--spacing-xl);
+ 
+    
     display: flex;
     flex-direction: column;
-    align-items: center;
+   
     justify-content: center;
-    gap: var(--spacing-md);
+    
   }
   
   .stat-card-wide {
     grid-column: 1 / -1;
+    background-color: var(--color-bg-primary);
   }
   
   .stat-label {

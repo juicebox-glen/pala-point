@@ -1,32 +1,46 @@
 /* V3 Set Win Styles */
 
-.set-win-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-xl);
-  }
-  
-  .set-win-title {
-    font-size: var(--font-size-screen-title);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    letter-spacing: var(--letter-spacing-wide);
-    text-align: center;
-    margin: 0;
-  }
-  
-  .set-win-score {
-    font-size: 15vw;
-    font-weight: 700;
-    color: var(--color-text-primary);
-    letter-spacing: var(--letter-spacing-normal);
-    text-align: center;
-  }
-  
-  .set-win-countdown {
-    font-size: 8vw;
-    font-weight: 700;
-    color: var(--color-accent);
-    margin-top: var(--spacing-md);
-  }
+.set-win-text-overlay {
+  background-color: var(--color-bg-dark);
+  padding: var(--padding-text-overlay);
+  text-align: center;
+  display: inline-block;
+  z-index: var(--z-overlay);
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.set-win-title {
+  font-size: 4.5vw;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: var(--letter-spacing-normal);
+  text-align: center;
+  margin: 0;
+  text-transform: uppercase;
+  font-family: var(--font-family);
+  line-height: 1.2;
+  margin-bottom: var(--spacing-sm);
+}
+
+.set-win-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1vw;
+  font-size: 15vw;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: var(--letter-spacing-normal);
+  position: relative;
+}
+
+.set-win-score-value {
+  flex: 0 0 auto;
+}
+
+.set-win-score-dash {
+  flex: 0 0 auto;
+  /* Dash is centered by flexbox alignment */
+  position: relative;
+  /* Ensure dash aligns to center of screen */
+}
