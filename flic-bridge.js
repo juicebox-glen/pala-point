@@ -17,8 +17,14 @@ const client = new FlicClient(FLIC_HOST, FLIC_PORT)
 
 // Your button MAC addresses
 const buttonSides = {
-  "90:88:a9:50:e4:41": "left",
-  "90:88:a9:50:e4:3d": "right", 
+  [process.env.FLIC_LEFT_MAC]: "left",
+  [process.env.FLIC_RIGHT_MAC]: "right"
+}
+
+// Add validation
+if (!process.env.FLIC_LEFT_MAC || !process.env.FLIC_RIGHT_MAC) {
+  console.error('ERROR: FLIC_LEFT_MAC and FLIC_RIGHT_MAC must be set in .env.local');
+  process.exit(1);
 }
 
 // Send keyboard commands to your Next.js app
