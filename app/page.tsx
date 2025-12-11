@@ -16,7 +16,7 @@ interface CustomConfig {
   setTieRule: SetTieRule;
 }
 
-const HOLD_DURATION = 1000; // 1 second
+const HOLD_DURATION = 800; // 0.8 seconds
 
 export default function SetupPage() {
   const router = useRouter();
