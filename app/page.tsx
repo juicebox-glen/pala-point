@@ -22,8 +22,6 @@ export default function SetupPage() {
   const router = useRouter();
   const reset = useGameStore((s) => s.reset);
   const setGameRules = useGameStore((s) => s.setGameRules);
-  const restoreSavedGame = useGameStore((s) => s.restoreSavedGame);
-  const clearSavedGame = useGameStore((s) => s.clearSavedGame);
   const setMatchStartTime = useGameStore((s) => s.setMatchStartTime);
   const setCourtId = useGameStore((s) => s.setCourtId);
 
@@ -34,7 +32,6 @@ export default function SetupPage() {
     setsTarget: 1,
     setTieRule: 'tiebreak',
   });
-  const [showResumeDialog, setShowResumeDialog] = useState(false);
 
   // Screensaver state
   const [showScreensaver, setShowScreensaver] = useState(false);
@@ -259,8 +256,6 @@ export default function SetupPage() {
       
       registerActivity();
       
-      // Only handle if dialog is NOT showing
-      if (showResumeDialog) return;
       
       const key = e.key.toLowerCase();
       
@@ -283,8 +278,6 @@ export default function SetupPage() {
         return;
       }
       
-      // Only handle if dialog is NOT showing
-      if (showResumeDialog) return;
       
       const key = e.key.toLowerCase();
       
@@ -303,7 +296,7 @@ export default function SetupPage() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [handleToggle, startHold, cancelHold, showResumeDialog, registerActivity]);
+  }, [handleToggle, startHold, cancelHold, registerActivity]);
 
   // Reset hold state when step changes to prevent carryover
   useEffect(() => {
@@ -397,32 +390,6 @@ export default function SetupPage() {
     };
   }, []);
 
-  // Check for saved game on mount
-  useEffect(() => {
-    const hasSavedGame = restoreSavedGame();
-    if (hasSavedGame) {
-      setShowResumeDialog(true);
-    }
-  }, [restoreSavedGame]);
-
-  // Handle resume dialog response
-  const handleResumeYes = useCallback(() => {
-    setShowResumeDialog(false);
-    // Game state will be updated by GameScoreboard when it loads
-    router.push('/game');
-  }, [router]);
-
-  const handleResumeNo = useCallback(() => {
-    setShowResumeDialog(false);
-    clearSavedGame();
-    // Reset to initial state
-    reset('A');
-    writeGameState({
-      court_state: 'idle',
-      current_score: null,
-      game_mode: null
-    });
-  }, [clearSavedGame, reset]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -449,12 +416,6 @@ export default function SetupPage() {
 
   return (
     <div className="screen-wrapper">
-      {showResumeDialog && (
-        <ResumeGameDialog
-          onYes={handleResumeYes}
-          onNo={handleResumeNo}
-        />
-      )}
       {step === 'game-type' && (
         <GameTypeScreen 
           selected={gameType}
@@ -490,286 +451,6 @@ export default function SetupPage() {
           holdProgress={holdProgress}
         />
       )}
-    </div>
-  );
-}
-
-function ResumeGameDialog({ 
-  onYes, 
-  onNo 
-}: { 
-  onYes: () => void;
-  onNo: () => void;
-}) {
-  const [selected, setSelected] = useState<'yes' | 'no'>('yes');
-  const [holdProgress, setHoldProgress] = useState(0);
-  const [isHolding, setIsHolding] = useState(false);
-  const keyDownRef = useRef(false);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const holdCompletedRef = useRef(false);
-  const isHoldingRef = useRef(false);
-
-  // Cancel hold timer
-  const cancelHold = useCallback(() => {
-    console.log('[ResumeDialog] cancelHold called', {
-      hasInterval: !!progressIntervalRef.current,
-      keyDownRef: keyDownRef.current,
-      holdCompleted: holdCompletedRef.current,
-      isHoldingRef: isHoldingRef.current,
-      stack: new Error().stack
-    });
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-    isHoldingRef.current = false;
-    setIsHolding(false);
-    setHoldProgress(0);
-    holdCompletedRef.current = false;
-  }, []);
-
-  // Complete hold action
-  const completeHold = useCallback(() => {
-    console.log('[ResumeDialog] completeHold called', {
-      selected,
-      keyDownRef: keyDownRef.current,
-      holdCompleted: holdCompletedRef.current
-    });
-    keyDownRef.current = false;
-    cancelHold();
-    if (selected === 'yes') {
-      onYes();
-    } else {
-      onNo();
-    }
-  }, [selected, onYes, onNo, cancelHold]);
-
-  // Start hold timer
-  const startHold = useCallback(() => {
-    console.log('[ResumeDialog] startHold called', {
-      isHoldingRef: isHoldingRef.current,
-      keyDownRef: keyDownRef.current,
-      hasInterval: !!progressIntervalRef.current
-    });
-    if (isHoldingRef.current) {
-      console.log('[ResumeDialog] startHold blocked - already holding');
-      return;
-    }
-    
-    isHoldingRef.current = true;
-    setIsHolding(true);
-    setHoldProgress(0);
-    holdCompletedRef.current = false;
-    
-    const startTime = Date.now();
-    console.log('[ResumeDialog] Starting hold timer, target duration:', HOLD_DURATION);
-
-    progressIntervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min((elapsed / HOLD_DURATION) * 100, 100);
-      setHoldProgress(progress);
-      
-      if (progress >= 100) {
-        console.log('[ResumeDialog] Hold completed, progress:', progress);
-        holdCompletedRef.current = true;
-        completeHold();
-      }
-    }, 16); // ~60fps
-  }, [completeHold]);
-
-  // Handle keyboard input for dialog
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      console.log('[ResumeDialog] keydown:', key, {
-        repeat: e.repeat,
-        keyDownRef: keyDownRef.current,
-        isHoldingRef: isHoldingRef.current,
-        holdCompleted: holdCompletedRef.current
-      });
-      
-      if (key === 'q' || key === 'p') {
-        // Toggle between yes and no
-        console.log('[ResumeDialog] Toggling selection');
-        setSelected(prev => prev === 'yes' ? 'no' : 'yes');
-        cancelHold();
-      } else if (key === 'r') {
-        // Process first keydown (even if marked as repeat by xdotool/browser)
-        // Ignore subsequent repeats only if we've already started the hold
-        if (e.repeat && keyDownRef.current) {
-          console.log('[ResumeDialog] R keydown ignored - keyboard repeat (already holding)');
-          return;
-        }
-        if (!keyDownRef.current) {
-          console.log('[ResumeDialog] R keydown - starting hold', {
-            isRepeat: e.repeat,
-            keyDownRef: keyDownRef.current
-          });
-          keyDownRef.current = true;
-          startHold();
-        } else {
-          console.log('[ResumeDialog] R keydown ignored - already down');
-        }
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      console.log('[ResumeDialog] keyup:', key, {
-        keyDownRef: keyDownRef.current,
-        isHoldingRef: isHoldingRef.current,
-        holdCompleted: holdCompletedRef.current,
-        hasInterval: !!progressIntervalRef.current
-      });
-      
-      if (key === 'r') {
-        keyDownRef.current = false;
-        // Always cancel on keyup (matching working pattern)
-        cancelHold();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      cancelHold();
-    };
-  }, [startHold, cancelHold]);
-
-  return (
-    <div 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-      }}
-    >
-      <div 
-        style={{
-          backgroundColor: 'var(--color-bg-primary, #121212)',
-          padding: '3rem',
-          borderRadius: '8px',
-          textAlign: 'center',
-          maxWidth: '600px',
-          border: '2px solid var(--color-team-1, #FF1493)',
-        }}
-      >
-        <div 
-          style={{
-            fontSize: '2rem',
-            marginBottom: '2rem',
-            color: 'var(--color-text-primary, #ffffff)',
-            fontWeight: 'bold',
-          }}
-        >
-          Resume previous game?
-        </div>
-        <div 
-          style={{
-            display: 'flex',
-            gap: '2rem',
-            justifyContent: 'center',
-            marginTop: '2rem',
-          }}
-        >
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={onYes}
-              style={{
-                padding: '1rem 2rem',
-                fontSize: '1.2rem',
-                backgroundColor: selected === 'yes' 
-                  ? 'var(--color-team-1, #FF1493)' 
-                  : 'rgba(4, 202, 149, 0.3)',
-                color: selected === 'yes' ? '#000' : '#888',
-                border: selected === 'yes' 
-                  ? '2px solid var(--color-team-1, #FF1493)' 
-                  : '2px solid rgba(4, 202, 149, 0.5)',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                opacity: selected === 'yes' ? 1 : 0.6,
-                transition: 'all 0.2s',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              YES
-              {selected === 'yes' && isHolding && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    height: '4px',
-                    width: `${holdProgress}%`,
-                    backgroundColor: '#121212',
-                    transition: 'width 0.1s',
-                  }}
-                />
-              )}
-            </button>
-          </div>
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={onNo}
-              style={{
-                padding: '1rem 2rem',
-                fontSize: '1.2rem',
-                backgroundColor: selected === 'no' 
-                  ? 'var(--color-team-2, #a855f7)' 
-                  : 'rgba(168, 85, 247, 0.3)',
-                color: selected === 'no' ? '#fff' : '#888',
-                border: selected === 'no' 
-                  ? '2px solid var(--color-team-2, #a855f7)' 
-                  : '2px solid rgba(168, 85, 247, 0.5)',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                opacity: selected === 'no' ? 1 : 0.6,
-                transition: 'all 0.2s',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              NO
-              {selected === 'no' && isHolding && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    height: '4px',
-                    width: `${holdProgress}%`,
-                    backgroundColor: '#fff',
-                    transition: 'width 0.1s',
-                  }}
-                />
-              )}
-            </button>
-          </div>
-        </div>
-        <div 
-          style={{
-            marginTop: '1rem',
-            fontSize: '0.9rem',
-            color: 'var(--color-text-primary, #ffffff)',
-            opacity: 0.7,
-          }}
-        >
-          Q/P to toggle • Hold R to confirm
-        </div>
-      </div>
     </div>
   );
 }

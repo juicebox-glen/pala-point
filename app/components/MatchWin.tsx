@@ -324,14 +324,16 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
           {/* Slide 2: Match Momentum */}
           {currentSlide === 2 && (
             <div className="stats-content">
-              <h2 className="stats-title">MATCH MOMENTUM</h2>
-              <div className="momentum-grid">
-                {momentumDots.map((type, i) => (
-                  <div
-                    key={i}
-                    className={`momentum-dot ${type}`}
-                  />
-                ))}
+              <div className="match-win-text-overlay">
+                <h2 className="stats-title">MATCH MOMENTUM</h2>
+                <div className="momentum-grid">
+                  {momentumDots.map((type, i) => (
+                    <div
+                      key={i}
+                      className={`momentum-dot ${type}`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -400,10 +402,6 @@ export default function MatchWin({ state, onNewGame }: MatchWinProps) {
           </div>
         </div>
 
-        {/* Instructions */}
-        <div className="match-win-footer">
-          <p className="match-win-instruction">Press R for new game</p>
-        </div>
       </div>
     </div>
     </>

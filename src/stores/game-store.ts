@@ -3,73 +3,9 @@ import { initState, scorePoint as engineScorePoint, formatDisplay } from '@lib/e
 import type { EngineState, Team } from '@lib/engine/engine';
 import type { MatchRules, DeuceRule, SetTieRule } from '../types/rules';
 
-const STORAGE_KEY = 'palapoint_saved_game';
-const MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
-
 interface HistoryEntry {
   state: EngineState;
   sidesSwapped: boolean;
-}
-
-interface SavedGameState {
-  state: EngineState;
-  rules: MatchRules;
-  history: HistoryEntry[];
-  sidesSwapped: boolean;
-  timestamp: number;
-}
-
-// Save game state to localStorage
-function saveGameState(state: EngineState, rules: MatchRules, history: HistoryEntry[], sidesSwapped: boolean): void {
-  try {
-    const savedState: SavedGameState = {
-      state,
-      rules,
-      history,
-      sidesSwapped,
-      timestamp: Date.now(),
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(savedState));
-  } catch (error) {
-    console.error('Failed to save game state:', error);
-  }
-}
-
-// Load saved game from localStorage if less than 24 hours old
-function loadSavedGame(): SavedGameState | null {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return null;
-
-    const savedState: SavedGameState = JSON.parse(saved);
-    const age = Date.now() - savedState.timestamp;
-
-    // Delete if older than 24 hours
-    if (age > MAX_AGE_MS) {
-      localStorage.removeItem(STORAGE_KEY);
-      return null;
-    }
-
-    return savedState;
-  } catch (error) {
-    console.error('Failed to load saved game:', error);
-    // Clear corrupted data
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (clearError) {
-      console.error('Failed to clear corrupted save:', clearError);
-    }
-    return null;
-  }
-}
-
-// Clear saved game from localStorage
-function clearSavedGame(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (error) {
-    console.error('Failed to clear saved game:', error);
-  }
 }
 
 interface GameStore {
@@ -84,8 +20,6 @@ interface GameStore {
   undo: () => void;
   reset: (server?: Team) => void;
   swapSides: () => void;
-  restoreSavedGame: () => boolean;
-  clearSavedGame: () => void;
   setMatchStartTime: (time: string | null) => void;
   setCourtId: (id: string | null) => void;
   
@@ -133,8 +67,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       state: newState, 
       history: newHistory
     });
-    // Auto-save after each point
-    saveGameState(newState, rules, newHistory, sidesSwapped);
   },
 
   undo: () => {
@@ -159,54 +91,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       sidesSwapped: false,
       matchStartTime: null  // Reset match start time
     });
-    // Clear saved game when starting new game
-    clearSavedGame();
   },
 
   swapSides: () => {
     set((state) => ({ sidesSwapped: !state.sidesSwapped }));
-  },
-
-  restoreSavedGame: () => {
-    const saved = loadSavedGame();
-    if (!saved) {
-      return false;
-    }
-
-    try {
-      // Migrate old history format (EngineState[]) to new format (HistoryEntry[])
-      let migratedHistory: HistoryEntry[];
-      if (saved.history.length > 0 && !('state' in saved.history[0])) {
-        // Old format: EngineState[]
-        migratedHistory = (saved.history as any[]).map((state: EngineState) => ({
-          state,
-          sidesSwapped: saved.sidesSwapped // Use current sidesSwapped for all entries (best guess)
-        }));
-      } else {
-        // New format: HistoryEntry[]
-        migratedHistory = saved.history as HistoryEntry[];
-      }
-      
-      set({
-        state: saved.state,
-        rules: saved.rules,
-        history: migratedHistory,
-        sidesSwapped: saved.sidesSwapped,
-      });
-      return true;
-    } catch (error) {
-      console.error('Failed to restore saved game:', error);
-      clearSavedGame();
-      return false;
-    }
-  },
-
-  clearSavedGame: () => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (error) {
-      console.error('Failed to clear saved game:', error);
-    }
   },
 
   setMatchStartTime: (time) => {
