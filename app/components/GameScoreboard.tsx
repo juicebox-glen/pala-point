@@ -80,21 +80,6 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [scorePoint, undo, onReset, showSideSwap, showSetWin, teamOnLeft, teamOnRight, state.finished]);
 
-  // Track activity on mouse movement
-  useEffect(() => {
-    const handleActivity = () => registerActivity();
-
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('mousedown', handleActivity);
-    window.addEventListener('touchstart', handleActivity);
-
-    return () => {
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('mousedown', handleActivity);
-      window.removeEventListener('touchstart', handleActivity);
-    };
-  }, [registerActivity]);
-
   // Set win detection
   useEffect(() => {
     const currentSetsWon = view.setsWon;
