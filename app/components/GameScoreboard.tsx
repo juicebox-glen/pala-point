@@ -7,7 +7,6 @@ import type { Team } from "@lib/engine/engine";
 import SideSwap from "./SideSwap";
 import SetWin from "./SetWin";
 import MatchWin from "./MatchWin";
-import Screensaver from "./Screensaver";
 import { writeGameState } from "@/lib/state-writer";
 
 interface GameScoreboardProps {
@@ -42,10 +41,6 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   const [leftScoreAnimating, setLeftScoreAnimating] = useState(false);
   const [rightScoreAnimating, setRightScoreAnimating] = useState(false);
 
-  // Screensaver state
-  const [showScreensaver, setShowScreensaver] = useState(false);
-  const [lastActivity, setLastActivity] = useState(Date.now());
-  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Format the display using the engine
   const view = formatDisplay(state, rules);
@@ -55,23 +50,12 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   const teamOnLeft: Team = sidesSwapped ? 'B' : 'A';
   const teamOnRight: Team = sidesSwapped ? 'A' : 'B';
 
-  // Register activity
-  const registerActivity = useCallback(() => {
-    setLastActivity(Date.now());
-  }, []);
-
-  // Handle screensaver dismissal - must reset activity timer
-  const handleScreensaverDismiss = useCallback(() => {
-    setLastActivity(Date.now()); // CRITICAL: Reset timer when exiting screensaver
-    setShowScreensaver(false);
-  }, []);
 
   // Keyboard controls
   useEffect(() => {
     if (showSideSwap || showSetWin || state.finished) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      registerActivity();
       const key = e.key.toLowerCase();
       
       if (key === 'q') {
@@ -94,25 +78,7 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [scorePoint, undo, onReset, showSideSwap, showSetWin, teamOnLeft, teamOnRight, state.finished, registerActivity]);
-
-  // Idle detection for screensaver (30 seconds of inactivity)
-  useEffect(() => {
-    const checkIdle = () => {
-      const idleTime = Date.now() - lastActivity;
-      if (idleTime > 30000) { // 30 seconds
-        setShowScreensaver(true);
-      }
-    };
-
-    idleTimerRef.current = setInterval(checkIdle, 1000);
-
-    return () => {
-      if (idleTimerRef.current) {
-        clearInterval(idleTimerRef.current);
-      }
-    };
-  }, [lastActivity]);
+  }, [scorePoint, undo, onReset, showSideSwap, showSetWin, teamOnLeft, teamOnRight, state.finished]);
 
   // Track activity on mouse movement
   useEffect(() => {
@@ -378,11 +344,6 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
       saveMatch();
     }
   }, [state.finished, view.games.A, view.games.B, view.setsWon.A, view.setsWon.B, rules.scoringSystem, rules.setsTarget, rules.deuceRule, rules.setTieRule, matchStartTime, courtId]);
-
-  // Show screensaver if idle
-  if (showScreensaver) {
-    return <Screensaver onDismiss={handleScreensaverDismiss} />;
-  }
 
   // Show match win if finished
   if (state.finished && state.finished.winner) {
