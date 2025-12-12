@@ -2,12 +2,12 @@
 
 :root {
   /* Primary Brand Colors */
-  --color-primary: #04CA95;        /* Teal green - main brand color */
+  --color-primary: #03a97c;        /* Teal green - main brand color */
   --color-secondary: #BB86FC;      /* Purple - secondary brand color */
   --color-accent: #BDF33F;         /* Bright green - accents only (ball, highlights) */
   
   /* Team Colors */
-  --color-team-1: #04CA95;         /* Team 1 - Teal green */
+  --color-team-1: #03a97c;         /* Team 1 - Teal green */
   --color-team-2: #BB86FC;         /* Team 2 - Purple */
   
   /* Backgrounds */
@@ -107,7 +107,7 @@
   --color-bg-black: #121212;       /* Darkest background (was #000000) */
   --color-bg-dark: #121212;        /* Main dark background */
   --color-bg-medium: #1E1E1F;      /* Lighter dark background */
-  --color-selected: #04CA95;       /* Selected state background */
+  --color-selected: #03a97c;       /* Selected state background */
   
   /* Transition All */
   --transition-all: all 0.3s ease;
