@@ -15,6 +15,7 @@ interface GameStore {
   sidesSwapped: boolean;
   matchStartTime: string | null;  // ISO timestamp when game started
   courtId: string | null;          // Court UUID from environment
+  matchId: string | null;          // Database match ID for updating match on completion
   
   scorePoint: (team: Team) => void;
   undo: () => void;
@@ -22,6 +23,7 @@ interface GameStore {
   swapSides: () => void;
   setMatchStartTime: (time: string | null) => void;
   setCourtId: (id: string | null) => void;
+  setMatchId: (id: string | null) => void;
   
   setDeuceRule: (rule: DeuceRule) => void;
   setSetsTarget: (sets: 1 | 3) => void;
@@ -57,6 +59,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   sidesSwapped: false,
   matchStartTime: null,
   courtId: null,
+  matchId: null,
 
   scorePoint: (team) => {
     const { state, rules, history, sidesSwapped } = get();
@@ -89,7 +92,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       state: initState(rules, startServer),
       history: [],
       sidesSwapped: false,
-      matchStartTime: null  // Reset match start time
+      matchStartTime: null,  // Reset match start time
+      matchId: null  // Reset match ID
     });
   },
 
@@ -103,6 +107,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   setCourtId: (id) => {
     set({ courtId: id });
+  },
+
+  setMatchId: (id) => {
+    set({ matchId: id });
   },
 
   setDeuceRule: (rule) => {
