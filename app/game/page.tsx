@@ -15,15 +15,12 @@ export default function GamePage() {
   const reset = useGameStore((s) => s.reset);
   const state = useGameStore((s) => s.state);
   const rules = useGameStore((s) => s.rules);
-  const courtId = useGameStore((s) => s.courtId);
-  const matchStartTime = useGameStore((s) => s.matchStartTime);
-  const setMatchId = useGameStore((s) => s.setMatchId);
 
   const handleServerAnnouncementComplete = () => {
     setPhase('playing');
   };
 
-  // Write state and create match when game phase changes to playing
+  // Write state when game phase changes to playing
   useEffect(() => {
     if (phase === 'playing') {
       // Detect if it's Quick Play (default config: 1 set, advantage, tiebreak)
@@ -39,50 +36,8 @@ export default function GamePage() {
         current_score: { teamA: 0, teamB: 0 },
         game_mode: gameMode
       });
-
-      // Create match entry in database when game starts
-      async function createMatch() {
-        if (!courtId) {
-          console.warn('COURT_ID not configured - match not created');
-          return;
-        }
-
-        const startTime = matchStartTime || new Date().toISOString();
-
-        try {
-          const response = await fetch('/api/save-match', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              court_id: courtId,
-              mode: gameMode,
-              started_at: startTime,
-              ended_at: null,  // Game in progress
-              team1_score: 0,
-              team2_score: 0,
-              duration_seconds: 0
-            })
-          });
-
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to create match');
-          }
-
-          const data = await response.json();
-          if (data.matchId) {
-            setMatchId(data.matchId);
-            console.log('Match created with ID:', data.matchId);
-          }
-        } catch (error) {
-          console.error('Failed to create match:', error);
-          // Don't block the game - continue even if match creation fails
-        }
-      }
-
-      createMatch();
     }
-  }, [phase, rules.scoringSystem, rules.setsTarget, rules.deuceRule, rules.setTieRule, courtId, matchStartTime, setMatchId]);
+  }, [phase, rules.scoringSystem, rules.setsTarget, rules.deuceRule, rules.setTieRule]);
 
   const handleReset = () => {
     reset();

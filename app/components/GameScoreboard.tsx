@@ -22,7 +22,6 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
   const swapSides = useGameStore((s) => s.swapSides);
   const matchStartTime = useGameStore((s) => s.matchStartTime);
   const courtId = useGameStore((s) => s.courtId);
-  const matchId = useGameStore((s) => s.matchId);
 
   const [showSideSwap, setShowSideSwap] = useState(false);
   const [showSetWin, setShowSetWin] = useState(false);
@@ -243,10 +242,10 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
         game_mode: gameMode
       });
 
-      // Update match in Supabase (match was created when game started)
-      async function updateMatch() {
-        if (!matchId) {
-          console.warn('Match ID not found - match may not have been created at game start');
+      // Save match to Supabase
+      async function saveMatch() {
+        if (!courtId) {
+          console.error('COURT_ID not configured - match not saved');
           return;
         }
 
@@ -279,13 +278,25 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
           team2Score = lastSet?.gamesB ?? 0;
         }
 
-        console.log('=== MATCH UPDATE DEBUG ===');
-        console.log('Match ID:', matchId);
+        console.log('=== MATCH SAVE DEBUG ===');
+        console.log('Court ID:', courtId);
         console.log('Game mode:', gameMode);
         console.log('Match start time:', matchStartTime);
+        console.log('Current state:', state);
+        console.log('Rules:', rules);
+        console.log('Last set:', lastSet);
         console.log('Team 1 score:', team1Score);
         console.log('Team 2 score:', team2Score);
         console.log('Duration seconds:', durationSeconds);
+        console.log('Payload:', JSON.stringify({
+          court_id: courtId,
+          mode: gameMode,
+          team1_score: team1Score,
+          team2_score: team2Score,
+          duration_seconds: durationSeconds,
+          started_at: matchStartTime,
+          ended_at: endTime
+        }, null, 2));
         console.log('======================');
 
         try {
@@ -293,29 +304,31 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              match_id: matchId,  // Include match_id to trigger UPDATE
+              court_id: courtId,
+              mode: gameMode,
               team1_score: team1Score,
               team2_score: team2Score,
               duration_seconds: durationSeconds,
+              started_at: matchStartTime,
               ended_at: endTime
             })
           });
 
           if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error || 'Failed to update match');
+            throw new Error(error.error || 'Failed to save match');
           }
 
-          console.log('Match updated successfully');
+          console.log('Match saved successfully');
         } catch (error) {
-          console.error('Failed to update match:', error);
-          // Don't block the game - continue showing win screen even if update fails
+          console.error('Failed to save match:', error);
+          // Don't block the game - continue showing win screen even if save fails
         }
       }
 
-      updateMatch();
+      saveMatch();
     }
-  }, [state.finished, view.games.A, view.games.B, view.setsWon.A, view.setsWon.B, rules.scoringSystem, rules.setsTarget, rules.deuceRule, rules.setTieRule, matchStartTime, matchId]);
+  }, [state.finished, view.games.A, view.games.B, view.setsWon.A, view.setsWon.B, rules.scoringSystem, rules.setsTarget, rules.deuceRule, rules.setTieRule, matchStartTime, courtId]);
 
   // Show match win if finished
   if (state.finished && state.finished.winner) {
