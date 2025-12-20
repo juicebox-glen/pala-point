@@ -23,12 +23,12 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const { mode, team1_score, team2_score, duration_seconds, started_at, ended_at, raw_data } = await req.json()
+    const { mode, team_a_games, team_b_games, duration_seconds, started_at, ended_at, raw_data } = await req.json()
 
     // Validate required fields
-    if (!mode || team1_score === undefined || team2_score === undefined || !started_at || !ended_at) {
+    if (!mode || team_a_games === undefined || team_b_games === undefined || !started_at || !ended_at) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: mode, team1_score, team2_score, started_at, ended_at' }),
+        JSON.stringify({ error: 'Missing required fields: mode, team_a_games, team_b_games, started_at, ended_at' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -60,8 +60,8 @@ serve(async (req) => {
       .insert({
         court_id: courtId,
         mode,
-        team1_score,
-        team2_score,
+        team_a_games: team_a_games,
+        team_b_games: team_b_games,
         duration_seconds: duration_seconds || null,
         started_at,
         ended_at,

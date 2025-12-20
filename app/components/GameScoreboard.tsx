@@ -291,8 +291,8 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
         console.log('Payload:', JSON.stringify({
           court_id: courtId,
           mode: gameMode,
-          team1_score: team1Score,
-          team2_score: team2Score,
+          team_a_games: team1Score,
+          team_b_games: team2Score,
           duration_seconds: durationSeconds,
           started_at: matchStartTime,
           ended_at: endTime
@@ -306,8 +306,8 @@ export default function GameScoreboard({ onReset }: GameScoreboardProps) {
             body: JSON.stringify({
               court_id: courtId,
               mode: gameMode,
-              team1_score: team1Score,
-              team2_score: team2Score,
+              team_a_games: team1Score,
+              team_b_games: team2Score,
               duration_seconds: durationSeconds,
               started_at: matchStartTime,
               ended_at: endTime

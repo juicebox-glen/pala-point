@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { court_id, mode, team1_score, team2_score, duration_seconds, started_at, ended_at } = body;
+    const { court_id, mode, team_a_games, team_b_games, duration_seconds, started_at, ended_at } = body;
 
     // Get Supabase credentials from environment
     // Using service role key for backend API route (bypasses RLS)
@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
       .insert({
         court_id,
         mode,
-        team1_score,
-        team2_score,
+        team_a_games,
+        team_b_games,
         duration_seconds,
         started_at,
         ended_at
